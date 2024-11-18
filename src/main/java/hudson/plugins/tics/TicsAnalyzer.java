@@ -6,14 +6,13 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.text.StringEscapeUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -40,7 +39,6 @@ import hudson.model.TaskListener;
 import hudson.plugins.tics.TicsPublisher.InvalidTicsViewerUrl;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
-import hudson.util.ArgumentListBuilder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.tasks.SimpleBuildStep;
@@ -159,7 +157,7 @@ public class TicsAnalyzer extends Builder implements SimpleBuildStep {
         final boolean isLauncherUnix = launcher.isUnix();
 
         final String bootstrapCommand =  installTics ? getBootstrapCmd(url, isLauncherUnix) : "";
-        final ArgumentListBuilder ticsAnalysisCommand = getTicsQServerArgs(buildEnv, isLauncherUnix);
+        final ImmutableList<String> ticsAnalysisCommand = getTicsQServerArgs(buildEnv, isLauncherUnix);
 
         final String command = createCommand(bootstrapCommand, ticsAnalysisCommand, isLauncherUnix);
         final ProcStarter starter = launcher.new ProcStarter().stdout(listener).cmdAsSingleString(command)
@@ -169,37 +167,41 @@ public class TicsAnalyzer extends Builder implements SimpleBuildStep {
     }
 
 
-    protected ArgumentListBuilder getTicsQServerArgs(final EnvVars buildEnv, final boolean isLauncherUnix) {
-        final ArgumentListBuilder args = new ArgumentListBuilder();
+    protected ImmutableList<String> getTicsQServerArgs(final EnvVars buildEnv, final boolean isLauncherUnix) {
+        final ImmutableList.Builder<String> args = ImmutableList.builder();
         final String ticsQServer = "TICSQServer" + (isLauncherUnix ? "" : ".exe");
 
         args.add(getFullyQualifiedPath(ticsQServer));
 
         if (isNotEmpty(projectName)) {
             args.add("-project");
-            args.add(Util.replaceMacro(projectName, buildEnv));
+            args.add(escapeValue(Util.replaceMacro(projectName, buildEnv)));
         }
         if (isNotEmpty(branchName)) {
             args.add("-branchname");
-            args.add(Util.replaceMacro(branchName, buildEnv));
+            args.add(escapeValue(Util.replaceMacro(branchName, buildEnv)));
         }
 
         if (!Strings.isNullOrEmpty(branchDirectory)) {
             args.add("-branchdir");
-            args.add(Util.replaceMacro(branchDirectory, buildEnv));
+            args.add(escapeValue(Util.replaceMacro(branchDirectory, buildEnv)));
         }
 
         if (createTmpdir && isNotEmpty(tmpdir)) {
             args.add("-tmpdir");
-            args.add(Util.replaceMacro(tmpdir.trim(), buildEnv));
+            args.add(escapeValue(Util.replaceMacro(tmpdir.trim(), buildEnv)));
         }
         if (isNotEmpty(extraArguments)) {
-            args.addTokenized(Util.replaceMacro(extraArguments.trim(), buildEnv));
+            args.add(Objects.requireNonNull(Util.replaceMacro(extraArguments.trim(), buildEnv)));
         }
         addMetrics(args, "-calc", calc);
         addMetrics(args, "-recalc", recalc);
 
-        return args;
+        return args.build();
+    }
+
+    private String escapeValue(final String value) {
+        return "'" + value + "'";
     }
 
     protected String getBootstrapCmd(final String url, final boolean isLinux) {
@@ -210,31 +212,20 @@ public class TicsAnalyzer extends Builder implements SimpleBuildStep {
         }
     }
 
-    protected String createCommand(final String bootstrapCmd, final ArgumentListBuilder ticsAnalysisCmd, final boolean isLinux) {
+    protected String createCommand(final String bootstrapCmd, final ImmutableList<String> ticsAnalysisCmd, final boolean isLinux) {
         final String command;
         if (isLinux) {
             final String bootstrap = bootstrapCmd.isEmpty() ? "" : bootstrapCmd + " &&";
-            command  = "bash -c \"" + bootstrap +  " " + getTicsAnalysisCmdEscapedLinux(ticsAnalysisCmd) + "\"";
+            command  = "bash -c \"" + bootstrap +  " " + getTicsAnalysisCmd(ticsAnalysisCmd) + "\"";
         } else {
             final String bootstrap = bootstrapCmd.isEmpty() ? "" : bootstrapCmd;
-            command = "powershell \"" + bootstrap + "; if ($?) { " + getTicsAnalysisCmdEscapedWin(ticsAnalysisCmd) + " }\"";
+            command = "powershell \"" + bootstrap + "; if ($?) { " + getTicsAnalysisCmd(ticsAnalysisCmd) + " }\"";
         }
         return command;
     }
 
-    protected String getTicsAnalysisCmdEscapedLinux(final ArgumentListBuilder ticsAnalysisCmd) {
-        return ticsAnalysisCmd.toList().stream().map(StringEscapeUtils::escapeXSI).collect(Collectors.joining(" "));
-    }
-
-    protected String getTicsAnalysisCmdEscapedWin(final ArgumentListBuilder ticsAnalysisCmd) {
-        return removeDoubleQuoteFromCommand("calc", ticsAnalysisCmd.toString());
-    }
-
-    protected String removeDoubleQuoteFromCommand(final String flag, final String cmd) {
-        // Trim double quotes for metric(s) argument after the -calc/-recalc flag, e.g. -calc "CODINGSTANDARD".
-        // These double quotes are added during ticsAnalysisCmd.toWindowsCommand().toString() operation.
-        // This will cause issue during the execution of the created powershell script (#33818-1)
-        return cmd.replaceAll(flag + " \"(\\S+)\"", flag + " $1" );
+    protected String getTicsAnalysisCmd(final ImmutableList<String> ticsAnalysisCmd) {
+        return String.join(" ", ticsAnalysisCmd);
     }
 
     private String getInstallTicsApiUrl(final String tiobewebBaseUrl, final String os) throws URISyntaxException {
@@ -252,7 +243,7 @@ public class TicsAnalyzer extends Builder implements SimpleBuildStep {
         return !Strings.nullToEmpty(arg).trim().isEmpty();
     }
 
-    void addMetrics(final ArgumentListBuilder args, final String key, final Metrics metrics) {
+    void addMetrics(final ImmutableList.Builder<String> args, final String key, final Metrics metrics) {
         final ImmutableList<String> names = metrics.getEnabledMetrics();
         if (!names.isEmpty()) {
             args.add(key);
