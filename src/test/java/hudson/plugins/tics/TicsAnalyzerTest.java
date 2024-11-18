@@ -108,26 +108,26 @@ public class TicsAnalyzerTest {
     private List<TicsAnalyzerCmdTestCase> getTicsAnalysisCmdEscapedTestCases() {
         final List<TicsAnalyzerCmdTestCase> testCases = new ArrayList<>();
 
-        final TicsArguments windowsArgs = new TicsArguments("cpp-game-vs", "master", "D:\\Development\\dev_test\\projects\\cpp-game-vs", "D:\\Development\\dev_test\\tmp\\33733-tmpdir");
-        final TicsArguments linuxArgs = new TicsArguments("game-gcc", "master", "/home/leila/development/dev-test/projects/game-gcc", "/home/leila/development/dev-test/tmp/33733-tmpdir");
+        final TicsArguments windowsArgs = new TicsArguments("cpp game", "master branch", "D:\\Development\\dev_test\\projects\\cpp game", "D:\\Development\\dev_test\\tmp\\33733-tmpdir");
+        final TicsArguments linuxArgs = new TicsArguments("cpp game", "master branch", "/home/leila/development/dev-test/projects/cpp game", "/home/leila/development/dev-test/tmp/33733-tmpdir");
         final TicsArguments noBranchAndTmpdirArgs = new TicsArguments("cpp-game", "", "", "");
 
         // Calc and Recalc
         testCases.add(new TicsAnalyzerCmdTestCase(getTicsAnalyzer(getMetrics(true, false, false, true), getMetrics(false, true, true, false), windowsArgs),
                 Platform.Windows,
-                "TICSQServer.exe -project 'cpp-game-vs' -branchname 'master' -branchdir 'D:\\Development\\dev_test\\projects\\cpp-game-vs' -tmpdir 'D:\\Development\\dev_test\\tmp\\33733-tmpdir' -calc CODINGSTANDARD,LOC -recalc COMPILERWARNING,FINALIZE"
+                "TICSQServer.exe -project 'cpp game' -branchname 'master branch' -branchdir 'D:\\Development\\dev_test\\projects\\cpp game' -tmpdir 'D:\\Development\\dev_test\\tmp\\33733-tmpdir' -calc CODINGSTANDARD,LOC -recalc COMPILERWARNING,FINALIZE"
         ));
 
         // Only Calc
         testCases.add(new TicsAnalyzerCmdTestCase(getTicsAnalyzer(getMetrics(true, false, false, true), getMetrics(false, false, false, false), windowsArgs),
                 Platform.Windows,
-                "TICSQServer.exe -project 'cpp-game-vs' -branchname 'master' -branchdir 'D:\\Development\\dev_test\\projects\\cpp-game-vs' -tmpdir 'D:\\Development\\dev_test\\tmp\\33733-tmpdir' -calc CODINGSTANDARD,LOC"
+                "TICSQServer.exe -project 'cpp game' -branchname 'master branch' -branchdir 'D:\\Development\\dev_test\\projects\\cpp game' -tmpdir 'D:\\Development\\dev_test\\tmp\\33733-tmpdir' -calc CODINGSTANDARD,LOC"
         ));
 
         // Only Recalc
         testCases.add(new TicsAnalyzerCmdTestCase(getTicsAnalyzer(getMetrics(false, false, false, false), getMetrics(false, true, true, false), windowsArgs),
                 Platform.Windows,
-                "TICSQServer.exe -project 'cpp-game-vs' -branchname 'master' -branchdir 'D:\\Development\\dev_test\\projects\\cpp-game-vs' -tmpdir 'D:\\Development\\dev_test\\tmp\\33733-tmpdir' -recalc COMPILERWARNING,FINALIZE"
+                "TICSQServer.exe -project 'cpp game' -branchname 'master branch' -branchdir 'D:\\Development\\dev_test\\projects\\cpp game' -tmpdir 'D:\\Development\\dev_test\\tmp\\33733-tmpdir' -recalc COMPILERWARNING,FINALIZE"
         ));
 
         // No branch and no tmpdir
@@ -139,19 +139,19 @@ public class TicsAnalyzerTest {
         // Calc and Recalc
         testCases.add(new TicsAnalyzerCmdTestCase(getTicsAnalyzer(getMetrics(true, false, false, true), getMetrics(false, true, true, false), linuxArgs),
                 Platform.Linux,
-                "TICSQServer -project 'game-gcc' -branchname 'master' -branchdir '/home/leila/development/dev-test/projects/game-gcc' -tmpdir '/home/leila/development/dev-test/tmp/33733-tmpdir' -calc CODINGSTANDARD,LOC -recalc COMPILERWARNING,FINALIZE"
+                "TICSQServer -project 'cpp game' -branchname 'master branch' -branchdir '/home/leila/development/dev-test/projects/cpp game' -tmpdir '/home/leila/development/dev-test/tmp/33733-tmpdir' -calc CODINGSTANDARD,LOC -recalc COMPILERWARNING,FINALIZE"
         ));
 
         // Only Calc
         testCases.add(new TicsAnalyzerCmdTestCase(getTicsAnalyzer(getMetrics(true, false, false, true), getMetrics(false, false, false, false), linuxArgs),
                 Platform.Linux,
-                "TICSQServer -project 'game-gcc' -branchname 'master' -branchdir '/home/leila/development/dev-test/projects/game-gcc' -tmpdir '/home/leila/development/dev-test/tmp/33733-tmpdir' -calc CODINGSTANDARD,LOC"
+                "TICSQServer -project 'cpp game' -branchname 'master branch' -branchdir '/home/leila/development/dev-test/projects/cpp game' -tmpdir '/home/leila/development/dev-test/tmp/33733-tmpdir' -calc CODINGSTANDARD,LOC"
         ));
 
         // Only Recalc
         testCases.add(new TicsAnalyzerCmdTestCase(getTicsAnalyzer(getMetrics(false, false, false, false), getMetrics(false, true, true, false), linuxArgs),
                 Platform.Linux,
-                "TICSQServer -project 'game-gcc' -branchname 'master' -branchdir '/home/leila/development/dev-test/projects/game-gcc' -tmpdir '/home/leila/development/dev-test/tmp/33733-tmpdir' -recalc COMPILERWARNING,FINALIZE"
+                "TICSQServer -project 'cpp game' -branchname 'master branch' -branchdir '/home/leila/development/dev-test/projects/cpp game' -tmpdir '/home/leila/development/dev-test/tmp/33733-tmpdir' -recalc COMPILERWARNING,FINALIZE"
         ));
 
         // No branch and no tmpdir
@@ -185,16 +185,16 @@ public class TicsAnalyzerTest {
         final TicsAnalyzer analyzer = getTicsAnalyzer(
                 getMetrics(true, false, false, true),
                 getMetrics(false, true, true, false),
-                new TicsArguments("cpp-game", "main", ".", ""));
+                new TicsArguments("cpp-game", "main", ".", "/tmp/cpp game (TEST)"));
 
         final ImmutableList<String> args = analyzer.getTicsQServerArgs(buildEnv, true);
         final String bootstrapCmd = analyzer.getBootstrapCmd(analyzer.ticsConfiguration, true);
 
         final String commandWithBootstrap = analyzer.createCommand(bootstrapCmd, args, true);
-        assertEquals("bash -c \". <(curl --silent --show-error 'http://192.168.1.204:42506/tiobeweb/TICS/api/cfg?name=default') && TICSQServer -project 'cpp-game' -branchname 'main' -branchdir '.' -calc CODINGSTANDARD,LOC -recalc COMPILERWARNING,FINALIZE\"", commandWithBootstrap);
+        assertEquals("bash -c \". <(curl --silent --show-error 'http://192.168.1.204:42506/tiobeweb/TICS/api/cfg?name=default') && TICSQServer -project 'cpp-game' -branchname 'main' -branchdir '.' -tmpdir '/tmp/cpp game (TEST)' -calc CODINGSTANDARD,LOC -recalc COMPILERWARNING,FINALIZE\"", commandWithBootstrap);
 
         final String commandNoBootstrap = analyzer.createCommand("", args, true);
-        assertEquals("bash -c \" TICSQServer -project 'cpp-game' -branchname 'main' -branchdir '.' -calc CODINGSTANDARD,LOC -recalc COMPILERWARNING,FINALIZE\"", commandNoBootstrap);
+        assertEquals("bash -c \" TICSQServer -project 'cpp-game' -branchname 'main' -branchdir '.' -tmpdir '/tmp/cpp game (TEST)' -calc CODINGSTANDARD,LOC -recalc COMPILERWARNING,FINALIZE\"", commandNoBootstrap);
     }
 
     @Test
