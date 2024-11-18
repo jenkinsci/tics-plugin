@@ -16,7 +16,6 @@ public class TicsAnalyzerTest {
     public String ticsConfiguration = "http://192.168.1.204:42506/tiobeweb/TICS/api/cfg?name=default";
     public String environmentVariables = "";
     public boolean createTmpdir = true;
-    public String extraArguments = "";
     public boolean installTics = false;
     public String credentialsId = "auth-token";
 
@@ -30,7 +29,7 @@ public class TicsAnalyzerTest {
                 , environmentVariables
                 , createTmpdir
                 , ticsArgs.tmpdir
-                , extraArguments
+                , ticsArgs.extraArguments
                 , calcMetrics
                 , recalcMetrics
                 , installTics
@@ -84,12 +83,14 @@ public class TicsAnalyzerTest {
         public String branchName;
         public String branchDirectory;
         public String tmpdir;
+        public String extraArguments;
 
-        public TicsArguments(final String projectName, final String branchName, final String branchDirectory, final String tmpdir) {
+        public TicsArguments(final String projectName, final String branchName, final String branchDirectory, final String tmpdir, final String extraArguments) {
             this.projectName = projectName;
             this.branchName = branchName;
             this.branchDirectory = branchDirectory;
             this.tmpdir = tmpdir;
+            this.extraArguments = extraArguments;
         }
     }
 
@@ -108,9 +109,9 @@ public class TicsAnalyzerTest {
     private List<TicsAnalyzerCmdTestCase> getTicsAnalysisCmdEscapedTestCases() {
         final List<TicsAnalyzerCmdTestCase> testCases = new ArrayList<>();
 
-        final TicsArguments windowsArgs = new TicsArguments("cpp game", "master branch", "D:\\Development\\dev_test\\projects\\cpp game", "D:\\Development\\dev_test\\tmp\\33733-tmpdir");
-        final TicsArguments linuxArgs = new TicsArguments("cpp game", "master branch", "/home/leila/development/dev-test/projects/cpp game", "/home/leila/development/dev-test/tmp/33733-tmpdir");
-        final TicsArguments noBranchAndTmpdirArgs = new TicsArguments("cpp-game", "", "", "");
+        final TicsArguments windowsArgs = new TicsArguments("cpp game", "master branch", "D:\\Development\\dev_test\\projects\\cpp game", "D:\\Development\\dev_test\\tmp\\33733-tmpdir", "");
+        final TicsArguments linuxArgs = new TicsArguments("cpp game", "master branch", "/home/leila/development/dev-test/projects/cpp game", "/home/leila/development/dev-test/tmp/33733-tmpdir", "");
+        final TicsArguments noBranchAndTmpdirArgs = new TicsArguments("cpp-game", "", "", "", "");
 
         // Calc and Recalc
         testCases.add(new TicsAnalyzerCmdTestCase(getTicsAnalyzer(getMetrics(true, false, false, true), getMetrics(false, true, true, false), windowsArgs),
@@ -165,16 +166,14 @@ public class TicsAnalyzerTest {
     }
 
     @Test
-    public void testGetTicsAnalysisCmdEscaped() {
+    public void testGetTicsAnalysis() {
         final EnvVars buildEnv = new EnvVars();
 
         for (final TicsAnalyzerCmdTestCase testCase : getTicsAnalysisCmdEscapedTestCases()) {
             final boolean isLauncherUnix = testCase.platform == Platform.Linux;
             final ImmutableList<String> ticsAnalysisCmd = testCase.analyzer.getTicsQServerArgs(buildEnv, isLauncherUnix);
 
-            final String ticsAnalysisCmdEscaped = testCase.analyzer.getTicsAnalysisCmd(ticsAnalysisCmd);
-
-            assertEquals(testCase.expectedResult, ticsAnalysisCmdEscaped);
+            assertEquals(testCase.expectedResult, testCase.analyzer.getTicsAnalysisCmd(ticsAnalysisCmd));
         }
     }
 
@@ -185,16 +184,16 @@ public class TicsAnalyzerTest {
         final TicsAnalyzer analyzer = getTicsAnalyzer(
                 getMetrics(true, false, false, true),
                 getMetrics(false, true, true, false),
-                new TicsArguments("cpp-game", "main", ".", "/tmp/cpp game (TEST)"));
+                new TicsArguments("cpp-game", "main", ".", "/tmp/cpp game (TEST)", "-log 9 -viewer"));
 
         final ImmutableList<String> args = analyzer.getTicsQServerArgs(buildEnv, true);
         final String bootstrapCmd = analyzer.getBootstrapCmd(analyzer.ticsConfiguration, true);
 
         final String commandWithBootstrap = analyzer.createCommand(bootstrapCmd, args, true);
-        assertEquals("bash -c \". <(curl --silent --show-error 'http://192.168.1.204:42506/tiobeweb/TICS/api/cfg?name=default') && TICSQServer -project 'cpp-game' -branchname 'main' -branchdir '.' -tmpdir '/tmp/cpp game (TEST)' -calc CODINGSTANDARD,LOC -recalc COMPILERWARNING,FINALIZE\"", commandWithBootstrap);
+        assertEquals("bash -c \". <(curl --silent --show-error 'http://192.168.1.204:42506/tiobeweb/TICS/api/cfg?name=default') && TICSQServer -project 'cpp-game' -branchname 'main' -branchdir '.' -tmpdir '/tmp/cpp game (TEST)' -log 9 -viewer -calc CODINGSTANDARD,LOC -recalc COMPILERWARNING,FINALIZE\"", commandWithBootstrap);
 
         final String commandNoBootstrap = analyzer.createCommand("", args, true);
-        assertEquals("bash -c \" TICSQServer -project 'cpp-game' -branchname 'main' -branchdir '.' -tmpdir '/tmp/cpp game (TEST)' -calc CODINGSTANDARD,LOC -recalc COMPILERWARNING,FINALIZE\"", commandNoBootstrap);
+        assertEquals("bash -c \" TICSQServer -project 'cpp-game' -branchname 'main' -branchdir '.' -tmpdir '/tmp/cpp game (TEST)' -log 9 -viewer -calc CODINGSTANDARD,LOC -recalc COMPILERWARNING,FINALIZE\"", commandNoBootstrap);
     }
 
     @Test
@@ -204,7 +203,7 @@ public class TicsAnalyzerTest {
         final TicsAnalyzer analyzer = getTicsAnalyzer(
                 getMetrics(true, false, false, true),
                 getMetrics(false, true, true, false),
-                new TicsArguments("cpp-game", "main", ".", ""));
+                new TicsArguments("cpp-game", "main", ".", "", ""));
 
         final ImmutableList<String> args = analyzer.getTicsQServerArgs(buildEnv, false);
         final String bootstrapCmd = analyzer.getBootstrapCmd(analyzer.ticsConfiguration, false);
