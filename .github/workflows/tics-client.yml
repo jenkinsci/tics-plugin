@@ -1,12 +1,9 @@
-name: TICS Analyzer
+name: TICS Client
 
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: "00 00 * * *"
+on: [pull_request]
 
 jobs:
-  TICSQServer:
+  TICSClient:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -20,12 +17,10 @@ jobs:
           cache: maven
       - name: Build with Maven
         run: ./mvnw --batch-mode --update-snapshots clean package -P enable-jacoco
-      - name: Run TICSQServer
+      - name: Run TICS Client
         uses: tiobe/tics-github-action@v3
         with:
-          mode: qserver
           project: Jenkins
-          branchdir: .
           viewerUrl: https://eboit.tiobe.com/tiobeweb/TICS/api/cfg?name=main
           ticsAuthToken: ${{ secrets.EBOIT_ANALYZER_TOKEN }}
           installTics: true
