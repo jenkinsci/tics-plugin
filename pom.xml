@@ -94,7 +94,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>credentials</artifactId>
-            <version>2.3.0</version>
+            <version>1405.vb_cda_74a_f8974</version>
         </dependency>
         <dependency>
            <groupId>org.jenkins-ci.plugins</groupId>
