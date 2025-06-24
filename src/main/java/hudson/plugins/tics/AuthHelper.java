@@ -37,7 +37,7 @@ import hudson.util.Secret;
 import jenkins.model.Jenkins;
 
 public final class AuthHelper {
-    private AuthHelper() {}
+    AuthHelper() {}
 
     public static final String TICSAUTHTOKEN = "TICSAUTHTOKEN";
 
@@ -99,11 +99,11 @@ public final class AuthHelper {
         return Optional.empty();
     }
 
-    private static Pair<String, String> decodeTokenToUsernamePassword(final String token) {
+    static Pair<String, String> decodeTokenToUsernamePassword(final String token) {
         try {
             final byte[] decodedToken = java.util.Base64.getDecoder().decode(token);
             final String decodedTokenStr = new String(decodedToken, StandardCharsets.UTF_8);
-            final String[] splitted = decodedTokenStr.split(":");
+            final String[] splitted = decodedTokenStr.split(":", 2);
             if (splitted.length != 2) {
                 throw new IllegalStateException("Unexpected number of parts");
             }
