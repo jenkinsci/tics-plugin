@@ -1,25 +1,10 @@
 package hudson.plugins.tics;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.Optional;
-import java.util.regex.Pattern;
-
-import javax.annotation.Nonnull;
-
-import org.apache.commons.lang3.tuple.Pair;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.verb.POST;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
-
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -39,6 +24,19 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang3.tuple.Pair;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.verb.POST;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
+import java.util.regex.Pattern;
 
 public class TicsPublisher extends Recorder implements SimpleBuildStep {
     static final String LOGGING_PREFIX = "[TICS Publisher] ";
@@ -65,17 +63,23 @@ public class TicsPublisher extends Recorder implements SimpleBuildStep {
         this.failIfQualityGateFails = failIfQualityGateFails;
     }
 
-    /** Referenced in <code>config.jelly</code>. */
+    /**
+     * Referenced in <code>config.jelly</code>.
+     */
     public String getTicsPath() {
         return ticsPath;
     }
 
-    /** Referenced in <code>config.jelly</code>. */
+    /**
+     * Referenced in <code>config.jelly</code>.
+     */
     public String getViewerUrl() {
         return viewerUrl;
     }
 
-    /** Referenced in <code>config.jelly</code>. */
+    /**
+     * Referenced in <code>config.jelly</code>.
+     */
     public String getCredentialsId() {
         return credentialsId;
     }
@@ -88,18 +92,22 @@ public class TicsPublisher extends Recorder implements SimpleBuildStep {
         return getDescriptor().getViewerUrl();
     }
 
-    /** Referenced in <code>config.jelly</code>. */
+    /**
+     * Referenced in <code>config.jelly</code>.
+     */
     public boolean getCheckQualityGate() {
         return checkQualityGate;
     }
 
-    /** Referenced in <code>config.jelly</code>. */
+    /**
+     * Referenced in <code>config.jelly</code>.
+     */
     public boolean getFailIfQualityGateFails() {
         return failIfQualityGateFails;
     }
 
     @Override
-    public void perform(@Nonnull final Run<?, ?> run, @Nonnull final FilePath workspace, @NonNull final EnvVars envvars, @Nonnull final Launcher launcher, @Nonnull final TaskListener listener) throws IOException, RuntimeException, InterruptedException {
+    public void perform(@NonNull final Run<?, ?> run, @NonNull final FilePath workspace, @NonNull final EnvVars envvars, @NonNull final Launcher launcher, @NonNull final TaskListener listener) throws IOException, RuntimeException, InterruptedException {
         final Optional<Pair<String, String>> usernameAndPassword = AuthHelper.lookupUsernameAndPasswordFromCredentialsId(run.getParent(), credentialsId, run.getEnvironment(listener));
         final String ticsPath1 = Util.replaceMacro(Preconditions.checkNotNull(Strings.emptyToNull(this.ticsPath), "Path not specified"), run.getEnvironment(listener));
 
@@ -139,7 +147,7 @@ public class TicsPublisher extends Recorder implements SimpleBuildStep {
                 logger,
                 apiCall,
                 ticsPath1
-                );
+        );
         try {
             return builder.run();
         } catch (final Exception e) {
@@ -148,11 +156,12 @@ public class TicsPublisher extends Recorder implements SimpleBuildStep {
         }
     }
 
+    @SuppressFBWarnings("NP_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD")
     private QualityGateData retrieveQualityGateData(
             final QualityGateApiCall apiCall,
             final TaskListener listener,
             final String tiobeWebBaseUrl
-            ) {
+    ) {
         try {
             final QualityGateData gateData = apiCall.retrieveQualityGateData();
 
@@ -160,7 +169,7 @@ public class TicsPublisher extends Recorder implements SimpleBuildStep {
                 final boolean passed = gateData.apiResponse.passed;
                 final String encodedQualityGateViewerUrl = tiobeWebBaseUrl + "/" + gateData.apiResponse.url.replace("(", "%28").replace(")", "%29");
 
-                listener.getLogger().println(LOGGING_PREFIX + " Quality Gate " + (passed ? "passed": "failed")
+                listener.getLogger().println(LOGGING_PREFIX + " Quality Gate " + (passed ? "passed" : "failed")
                         + ". Please check the following url for more information: " + encodedQualityGateViewerUrl);
             }
 
@@ -196,20 +205,23 @@ public class TicsPublisher extends Recorder implements SimpleBuildStep {
             load();
         }
 
+        @NonNull
         @Override
         public String getDisplayName() {
             return "Publish TICS results";
         }
 
         @Override
-        public boolean configure(final StaplerRequest staplerRequest, final JSONObject json) throws FormException {
+        public boolean configure(final StaplerRequest2 request, final JSONObject json) throws FormException {
             // to persist global configuration information set that to properties and call save().
             this.globalViewerUrl = json.getString("globalViewerUrl");
             save();
             return true; // indicate that everything is good so far
         }
 
-        /** Helper method to check whether URL points to a TICS Viewer, in which case it returns Optional.absent(). */
+        /**
+         * Helper method to check whether URL points to a TICS Viewer, in which case it returns Optional.absent().
+         */
         private static Optional<FormValidation> checkViewerUrlForErrorsCommon(final String url) {
             final Pattern urlPattern = Pattern.compile("[^:/]+://[^/]+/[^/]+/[^/]+/?");
             final String urlErrorExample = "http(s)://hostname/tiobeweb/section/";
@@ -225,11 +237,7 @@ public class TicsPublisher extends Recorder implements SimpleBuildStep {
             }
 
             validation = ValidationHelper.checkViewerBaseUrlAccessibility(url);
-            if (validation.isPresent()) {
-                return validation;
-            }
-
-            return Optional.empty();
+            return validation;
         }
 
         private FormValidation checkViewerUrlForErrorsOrWarnings(final String value) {
@@ -241,10 +249,7 @@ public class TicsPublisher extends Recorder implements SimpleBuildStep {
                 return validation.get();
             }
             validation = ValidationHelper.checkViewerUrlForWarningsCommon(value);
-            if (validation.isPresent()) {
-                return validation.get();
-            }
-            return FormValidation.ok();
+            return validation.orElseGet(FormValidation::ok);
         }
 
 
@@ -314,7 +319,7 @@ public class TicsPublisher extends Recorder implements SimpleBuildStep {
                 if (!Strings.isNullOrEmpty(credentialsId)) {
                     final EnvVars envvars = project.getEnvironment(null, listener);
                     final String measureApiUrl = ValidationHelper.getMeasureApiUrl(ValidationHelper.getTiobewebBaseUrlFromGivenUrl(Util.replaceMacro(resolvedViewerUrl, envvars)));
-                    final PrintStream dummyLogger = new PrintStream(new ByteArrayOutputStream(), false, "UTF-8");
+                    final PrintStream dummyLogger = new PrintStream(new ByteArrayOutputStream(), false, StandardCharsets.UTF_8);
 
                     final Optional<Pair<String, String>> usernameAndPassword = AuthHelper.lookupUsernameAndPasswordFromCredentialsId(project, credentialsId, envvars);
                     final MeasureApiCall apiCall = new MeasureApiCall(dummyLogger, measureApiUrl, usernameAndPassword);
@@ -322,11 +327,7 @@ public class TicsPublisher extends Recorder implements SimpleBuildStep {
                 }
 
                 return FormValidation.ok();
-            } catch (final IllegalArgumentException e) {
-                return FormValidation.errorWithMarkup(e.getMessage());
-            } catch (final MeasureApiCallException e) {
-                return FormValidation.errorWithMarkup(e.getMessage());
-            } catch (final InvalidTicsViewerUrl e) {
+            } catch (final IllegalArgumentException | InvalidTicsViewerUrl | MeasureApiCallException e) {
                 return FormValidation.errorWithMarkup(e.getMessage());
             }
         }
@@ -336,12 +337,16 @@ public class TicsPublisher extends Recorder implements SimpleBuildStep {
             return true;
         }
 
-        /** Referenced in <code>global.jelly</code>. */
+        /**
+         * Referenced in <code>global.jelly</code>.
+         */
         public String getViewerUrl() {
             return globalViewerUrl;
         }
 
-        /** Called by Jenkins to fill credentials dropdown list */
+        /**
+         * Called by Jenkins to fill credentials dropdown list
+         */
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath final Item context, @QueryParameter final String credentialsId) {
             return AuthHelper.fillCredentialsDropdown(context, credentialsId);
         }
@@ -353,20 +358,22 @@ public class TicsPublisher extends Recorder implements SimpleBuildStep {
         }
     }
 
-    /** Returns the tiobeweb URL based on the configured viewer url, tries project setting first, then global setting.
+    /**
+     * Returns the tiobeweb URL based on the configured viewer url, tries project setting first, then global setting.
      * Example: "http://192.168.1.88:42506/tiobeweb/default"
-     * @throws InvalidTicsViewerUrl */
+     *
+     * @throws InvalidTicsViewerUrl
+     */
     public String getResolvedTiobewebBaseUrl() throws InvalidTicsViewerUrl {
         Optional<String> optUrl = Optional.ofNullable(Strings.emptyToNull(getViewerUrl()));
-        if (!optUrl.isPresent()) {
+        if (optUrl.isEmpty()) {
             optUrl = Optional.ofNullable(Strings.emptyToNull(getDescriptor().getViewerUrl()));
         }
-        if (!optUrl.isPresent()) {
+        if (optUrl.isEmpty()) {
             throw new InvalidTicsViewerUrl("TICS Viewer URL was not configured at project level or globally.");
         }
         return ValidationHelper.getTiobewebBaseUrlFromGivenUrl(optUrl.get());
     }
-
 
 
 }

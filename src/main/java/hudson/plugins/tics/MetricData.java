@@ -1,12 +1,10 @@
 package hudson.plugins.tics;
 
-import java.util.List;
-
-import javax.annotation.Nullable;
-
+import com.google.common.collect.ImmutableList;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import org.joda.time.Instant;
 
-import com.google.common.collect.ImmutableList;
+import java.util.List;
 
 /**
  * Holds metric data produced by {@link TqiPublisherResultBuilder}.
@@ -22,7 +20,7 @@ public class MetricData {
                 final String status,
                 final String formattedValue,
                 final String letter
-                ) {
+        ) {
             this.status = status;
             this.formattedValue = formattedValue;
             this.letter = letter;
@@ -34,7 +32,9 @@ public class MetricData {
         public final String description;
         public final List<String> metricNames;
         public final List<MetricValue> metricValues;
-        /** Date of the run in ISO format */
+        /**
+         * Date of the run in ISO format
+         */
         public final String date;
 
         public Run(
@@ -43,7 +43,7 @@ public class MetricData {
                 final List<String> metricNames,
                 final List<MetricValue> metricValues,
                 final String date
-                ) {
+        ) {
             this.name = name;
             this.description = description;
             this.metricNames = metricNames;
@@ -63,7 +63,7 @@ public class MetricData {
             final List<Run> runs,
             final String ticsPath,
             final @Nullable String errorMessage
-            ) {
+    ) {
         this.metrics = metrics;
         this.runs = runs;
         this.ticsPath = ticsPath;

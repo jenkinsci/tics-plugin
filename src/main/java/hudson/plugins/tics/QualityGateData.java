@@ -1,10 +1,9 @@
 package hudson.plugins.tics;
 
-import java.util.Optional;
-
-import javax.annotation.Nullable;
-
+import edu.umd.cs.findbugs.annotations.Nullable;
 import org.joda.time.Instant;
+
+import java.util.Optional;
 
 /**
  * Holds data produced by {@link QualityGateApiCall}.
@@ -15,7 +14,9 @@ public class QualityGateData {
     public final @Nullable QualityGateApiResponse apiResponse;
     public final String measurementDate = Instant.now().toString();
     public final @Nullable String errorMessage;
-    /** True when ApiCall was successful and project passed quality gate. */
+    /**
+     * True when ApiCall was successful and project passed quality gate.
+     */
     public final boolean passed;
 
     public QualityGateData(
@@ -23,7 +24,7 @@ public class QualityGateData {
             final @Nullable String branch,
             final @Nullable QualityGateApiResponse apiResponse,
             final @Nullable String errorMessage
-            ) {
+    ) {
         this.project = project;
         this.branch = branch;
         this.apiResponse = apiResponse;

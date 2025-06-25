@@ -1,9 +1,9 @@
 package hudson.plugins.tics;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Response model for 'api/public/v1/QualityGateStatus'.

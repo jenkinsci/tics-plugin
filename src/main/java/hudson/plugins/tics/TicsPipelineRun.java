@@ -1,22 +1,11 @@
 package hudson.plugins.tics;
 
-import static java.util.stream.Collectors.toList;
-
-import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.List;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-import org.jenkinsci.Symbol;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
-
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -27,7 +16,15 @@ import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import jenkins.tasks.SimpleBuildStep;
+import org.jenkinsci.Symbol;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
+import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.List;
+
+@SuppressFBWarnings("PA_PUBLIC_PRIMITIVE_ATTRIBUTE")
 public class TicsPipelineRun extends Builder implements SimpleBuildStep {
 
     private static final ImmutableSet<String> ALL_METRICS = ImmutableSet.of("ABSTRACTINTERPRETATION",
@@ -85,11 +82,11 @@ public class TicsPipelineRun extends Builder implements SimpleBuildStep {
     }
 
     @Override
-    public void perform(@Nonnull final Run<?, ?> run,
-                        @Nonnull final FilePath workspace,
-                        @Nonnull final EnvVars envvars,
-                        @Nonnull final Launcher launcher,
-                        @Nonnull final TaskListener listener) throws IOException, InterruptedException {
+    public void perform(@NonNull final Run<?, ?> run,
+                        @NonNull final FilePath workspace,
+                        @NonNull final EnvVars envvars,
+                        @NonNull final Launcher launcher,
+                        @NonNull final TaskListener listener) throws IOException, InterruptedException {
 
         final boolean createTmpdir = !Strings.isNullOrEmpty(tmpdir);
         final TicsAnalyzer ta = new TicsAnalyzer(
@@ -118,7 +115,7 @@ public class TicsPipelineRun extends Builder implements SimpleBuildStep {
         if (metrics == null || metrics.isEmpty()) {
             return null;
         }
-        final List<String> incorrectMetrics = metrics.stream().filter(a -> !ALL_METRICS.contains(a)).collect(toList());
+        final List<String> incorrectMetrics = metrics.stream().filter(a -> !ALL_METRICS.contains(a)).toList();
         if (!incorrectMetrics.isEmpty()) {
             throw new IllegalArgumentException("The following metrics are incorrect: " + incorrectMetrics + ". \nThe available metrics are: " + String.join(", ", ALL_METRICS));
         }
@@ -160,12 +157,12 @@ public class TicsPipelineRun extends Builder implements SimpleBuildStep {
     }
 
     @DataBoundSetter
-    public void setRecalc (final List<String> value) {
+    public void setRecalc(final List<String> value) {
         this.recalc = value;
     }
 
     @DataBoundSetter
-    public void setCalc (final List<String> value) {
+    public void setCalc(final List<String> value) {
         this.calc = value;
     }
 
@@ -209,10 +206,11 @@ public class TicsPipelineRun extends Builder implements SimpleBuildStep {
         this.credentialsId = value;
     }
 
-    @Symbol("runTics") @Extension
+    @Symbol("runTics")
+    @Extension
     public static class DescriptorImpl extends BuildStepDescriptor<Builder> {
 
-        @Nonnull
+        @NonNull
         @Override
         public String getDisplayName() {
             return "";

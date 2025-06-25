@@ -1,9 +1,22 @@
 package hudson.plugins.tics;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
+import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.Lists;
+import com.google.common.primitives.Ints;
+import hudson.model.TaskListener;
+import hudson.plugins.tics.MeasureApiCall.MeasureApiCallException;
+import hudson.plugins.tics.TicsPublisher.InvalidTicsViewerUrl;
+import hudson.util.FormValidation;
+import org.apache.commons.lang.StringUtils;
+import org.apache.http.client.utils.URIBuilder;
+
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -12,24 +25,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.http.client.utils.URIBuilder;
-
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
-import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.Lists;
-import com.google.common.primitives.Ints;
-
-import hudson.model.TaskListener;
-import hudson.plugins.tics.MeasureApiCall.MeasureApiCallException;
-import hudson.plugins.tics.TicsPublisher.InvalidTicsViewerUrl;
-import hudson.util.FormValidation;
-
 /**
  * Helper methods to be used in TICSAnalyzer and TICSPublisher for viewer url validation or formatting.
- * 
  */
 public class ValidationHelper {
 
@@ -53,13 +50,12 @@ public class ValidationHelper {
     public static Optional<FormValidation> checkViewerBaseUrlAccessibility(final String url) {
         try {
             final String measureApiUrl = getMeasureApiUrl(getTiobewebBaseUrlFromGivenUrl(url));
-            final PrintStream dummyLogger = new PrintStream(new ByteArrayOutputStream(), false, "UTF-8");
+            final PrintStream dummyLogger = new PrintStream(new ByteArrayOutputStream(), false,
+                    StandardCharsets.UTF_8);
             final MeasureApiCall apiCall = new MeasureApiCall(dummyLogger, measureApiUrl, Optional.empty());
             apiCall.execute(MeasureApiCall.RESPONSE_DOUBLE_TYPETOKEN, "HIE://", "none");
             return Optional.empty();
-        } catch (final MeasureApiCallException | UnsupportedEncodingException e) {
-            return Optional.of(FormValidation.errorWithMarkup(e.getMessage()));
-        } catch (final InvalidTicsViewerUrl e) {
+        } catch (final MeasureApiCallException | InvalidTicsViewerUrl e) {
             return Optional.of(FormValidation.errorWithMarkup(e.getMessage()));
         }
     }
@@ -67,7 +63,8 @@ public class ValidationHelper {
     public static Optional<FormValidation> checkVersionCompatibility(final TaskListener listener, final String url) {
         try {
             final String ticsversionApi = getTiobewebBaseUrlFromGivenUrl(url) + "/api/v1/version";
-            final PrintStream dummyLogger = new PrintStream(new ByteArrayOutputStream(), false, "UTF-8");
+            final PrintStream dummyLogger = new PrintStream(new ByteArrayOutputStream(), false,
+                    StandardCharsets.UTF_8);
             final TicsVersionApiCall ticsVersionApiCall = new TicsVersionApiCall(ticsversionApi, Optional.empty(), dummyLogger);
             final String actualVersion = ticsVersionApiCall.retrieveTicsVersion();
 
@@ -84,14 +81,12 @@ public class ValidationHelper {
             }
 
         } catch (InvalidTicsViewerUrl e) {
-            FormValidation.errorWithMarkup(e.getMessage());
-        } catch (UnsupportedEncodingException e) {
-            FormValidation.errorWithMarkup(e.getMessage());
+            return Optional.of(FormValidation.errorWithMarkup(e.getMessage()));
         }
 
         return Optional.empty();
     }
-    
+
     private static int compareVersions(final List<Integer> base, final List<Integer> other) {
         return ComparisonChain.start()
                 .compare(base.get(0), other.get(0))
@@ -102,9 +97,9 @@ public class ValidationHelper {
     private static List<Integer> parseVersion(final String version) {
         List<Integer> parts = Lists.newArrayList(Splitter.on(".").split(version))
                 .stream()
-                .map(p -> Ints.tryParse(p))
+                .map(Ints::tryParse)
                 .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                .toList();
 
         if (parts.size() < 2) {
             throw new IllegalArgumentException("There was a problem parsing the TICS Viewer version: " + version);
@@ -126,7 +121,9 @@ public class ValidationHelper {
         return Optional.empty();
     }
 
-    /** Generic usage helper methods */
+    /**
+     * Generic usage helper methods
+     */
     public static String getTiobewebBaseUrlFromGivenUrl(final String arg0) throws InvalidTicsViewerUrl {
         final String url = StringUtils.stripEnd(arg0, "/");
 
