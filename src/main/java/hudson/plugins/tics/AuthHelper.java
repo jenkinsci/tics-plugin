@@ -37,7 +37,7 @@ import hudson.util.Secret;
 import jenkins.model.Jenkins;
 
 public final class AuthHelper {
-    AuthHelper() {}
+    private AuthHelper() {}
 
     public static final String TICSAUTHTOKEN = "TICSAUTHTOKEN";
 
