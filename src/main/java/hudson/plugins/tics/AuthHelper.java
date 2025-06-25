@@ -99,7 +99,7 @@ public final class AuthHelper {
         return Optional.empty();
     }
 
-    static Pair<String, String> decodeTokenToUsernamePassword(final String token) {
+    protected static Pair<String, String> decodeTokenToUsernamePassword(final String token) {
         try {
             final byte[] decodedToken = java.util.Base64.getDecoder().decode(token);
             final String decodedTokenStr = new String(decodedToken, StandardCharsets.UTF_8);

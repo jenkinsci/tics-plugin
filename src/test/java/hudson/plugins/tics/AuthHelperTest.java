@@ -1,14 +1,13 @@
 package hudson.plugins.tics;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class AuthHelperTest {
 
@@ -33,8 +32,6 @@ public class AuthHelperTest {
         return testCases;
     }
 
-    @Rule
-    public ExpectedException exceptionRule = ExpectedException.none();
 
     @Test
     public void testDecodeTokenToUsernamePassword() {
@@ -46,8 +43,10 @@ public class AuthHelperTest {
         }
 
         // Test case where an exception is thrown
-        exceptionRule.expect(IllegalArgumentException.class);
-        exceptionRule.expectMessage("Malformed authentication token. Please make sure you are using a valid token from the TICS Viewer.");
-        AuthHelper.decodeTokenToUsernamePassword("123456");
+        final IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> AuthHelper.decodeTokenToUsernamePassword("123456")
+        );
+        assertEquals("Malformed authentication token. Please make sure you are using a valid token from the TICS Viewer.", exception.getMessage());
     }
 }
