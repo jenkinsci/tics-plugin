@@ -1,31 +1,11 @@
 package hudson.plugins.tics;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.regex.Pattern;
-
-import javax.annotation.Nonnull;
-
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.http.client.utils.URIBuilder;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.verb.POST;
-
 import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
-
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -43,6 +23,23 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.http.client.utils.URIBuilder;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.verb.POST;
+
+import java.io.IOException;
+import java.io.PrintStream;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.regex.Pattern;
 
 public class TicsAnalyzer extends Builder implements SimpleBuildStep {
     static final String LOGGING_PREFIX = "[TICS Analyzer] ";
@@ -82,7 +79,7 @@ public class TicsAnalyzer extends Builder implements SimpleBuildStep {
             , final Metrics recalc
             , final boolean installTics
             , final String credentialsId
-            ) {
+    ) {
         this.ticsPath = ticsPath;
         this.ticsConfiguration = ticsConfiguration;
         this.projectName = projectName;
@@ -99,7 +96,7 @@ public class TicsAnalyzer extends Builder implements SimpleBuildStep {
     }
 
     @Override
-    public void perform(@Nonnull final Run<?, ?> run, @Nonnull final FilePath workspace, @Nonnull final EnvVars envvars, @Nonnull final Launcher launcher, @Nonnull final TaskListener listener) throws IOException, InterruptedException {
+    public void perform(@NonNull final Run<?, ?> run, @NonNull final FilePath workspace, @NonNull final EnvVars envvars, @NonNull final Launcher launcher, @NonNull final TaskListener listener) throws IOException, InterruptedException {
         final String errorPrefix = "TICS Analysis failed with exit code: ";
         final PrintStream logger = listener.getLogger();
         try {
@@ -139,7 +136,9 @@ public class TicsAnalyzer extends Builder implements SimpleBuildStep {
         }
     }
 
-    /** Prefixes given command with location of TICS, if available */
+    /**
+     * Prefixes given command with location of TICS, if available
+     */
     private String getFullyQualifiedPath(final String command) {
         String path = MoreObjects.firstNonNull(ticsPath, "").trim();
         if (path.isEmpty() || installTics) {
@@ -156,7 +155,7 @@ public class TicsAnalyzer extends Builder implements SimpleBuildStep {
     int launchTicsQServer(final String url, final Run<?, ?> run, final Launcher launcher, final TaskListener listener, final EnvVars buildEnv) throws IOException, InterruptedException {
         final boolean isLauncherUnix = launcher.isUnix();
 
-        final String bootstrapCommand =  installTics ? getBootstrapCmd(url, isLauncherUnix) : "";
+        final String bootstrapCommand = installTics ? getBootstrapCmd(url, isLauncherUnix) : "";
         final ImmutableList<String> ticsAnalysisCommand = getTicsQServerArgs(buildEnv, isLauncherUnix);
 
         final String command = createCommand(bootstrapCommand, ticsAnalysisCommand, isLauncherUnix);
@@ -216,7 +215,7 @@ public class TicsAnalyzer extends Builder implements SimpleBuildStep {
         final String command;
         if (isLinux) {
             final String bootstrap = bootstrapCmd.isEmpty() ? "" : bootstrapCmd + " &&";
-            command  = "bash -c \"" + bootstrap +  " " + getTicsAnalysisCmd(ticsAnalysisCmd) + "\"";
+            command = "bash -c \"" + bootstrap + " " + getTicsAnalysisCmd(ticsAnalysisCmd) + "\"";
         } else {
             final String bootstrap = bootstrapCmd.isEmpty() ? "" : bootstrapCmd;
             command = "powershell \"" + bootstrap + "; if ($?) { " + getTicsAnalysisCmd(ticsAnalysisCmd) + " }\"";
@@ -283,6 +282,7 @@ public class TicsAnalyzer extends Builder implements SimpleBuildStep {
             load();
         }
 
+        @NonNull
         @Override
         public String getDisplayName() {
             return "Run TICS";
@@ -294,12 +294,14 @@ public class TicsAnalyzer extends Builder implements SimpleBuildStep {
         }
 
         @Override
-        public boolean configure(final StaplerRequest staplerRequest, final JSONObject json) {
+        public boolean configure(final StaplerRequest2 request, final JSONObject json) {
             save();
             return true; // indicate that everything is good so far
         }
 
-        /** Called by Jenkins to fill credentials dropdown list */
+        /**
+         * Called by Jenkins to fill credentials dropdown list
+         */
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath final Item context, @QueryParameter final String credentialsId) {
             return AuthHelper.fillCredentialsDropdown(context, credentialsId);
         }
@@ -344,8 +346,8 @@ public class TicsAnalyzer extends Builder implements SimpleBuildStep {
         }
 
         @POST
-        public FormValidation doCheckTicsConfiguration(@AncestorInPath final Item item,  @AncestorInPath final TaskListener listener, @QueryParameter final String value,
-                @QueryParameter("installTics") final boolean installTics) {
+        public FormValidation doCheckTicsConfiguration(@AncestorInPath final Item item, @AncestorInPath final TaskListener listener, @QueryParameter final String value,
+                                                       @QueryParameter("installTics") final boolean installTics) {
             if (item == null) { // no context
                 return FormValidation.ok();
             }

@@ -1,13 +1,14 @@
 package hudson.plugins.tics;
 
-import java.io.PrintStream;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.gson.Gson;
+import hudson.ProxyConfiguration;
+import hudson.plugins.tics.MeasureApiCall.MeasureApiCallException;
+import hudson.plugins.tics.MeasureApiErrorResponse.AlertMessage;
+import hudson.util.Secret;
+import jenkins.model.Jenkins;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -21,16 +22,13 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.gson.Gson;
-
-import hudson.ProxyConfiguration;
-import hudson.plugins.tics.MeasureApiCall.MeasureApiCallException;
-import hudson.plugins.tics.MeasureApiErrorResponse.AlertMessage;
-import hudson.util.Secret;
-import jenkins.model.Jenkins;
+import java.io.PrintStream;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public abstract class AbstractApiCall {
     private final PrintStream logger;
@@ -67,27 +65,25 @@ public abstract class AbstractApiCall {
         String proxyUsageMsg = "";
         final Jenkins jenkins = Jenkins.get();
 
-        if (jenkins != null) {
-            final ProxyConfiguration proxy = jenkins.proxy;
-            if (proxy != null) {
-                final String proxyName = proxy.getName();
-                final int proxyPort = proxy.getPort();
-                final ImmutableList<Pattern> noProxyPatterns = ImmutableList.copyOf(proxy.getNoProxyHostPatterns());
-                final String proxyUser = proxy.getUserName();
-                final String proxyPass = Secret.toString(proxy.getSecretPassword());
+        final ProxyConfiguration proxy = jenkins.proxy;
+        if (proxy != null) {
+            final String proxyName = proxy.getName();
+            final int proxyPort = proxy.getPort();
+            final ImmutableList<Pattern> noProxyPatterns = ImmutableList.copyOf(proxy.getNoProxyHostPatterns());
+            final String proxyUser = proxy.getUserName();
+            final String proxyPass = Secret.toString(proxy.getSecretPassword());
 
-                if (!isProxyExempted(url, noProxyPatterns)) {
-                    proxyUsageMsg += "Using proxy: " + proxyName + ":" + proxyPort;
-                    final HttpHost hostProxy = new HttpHost(proxyName, proxyPort);
-                    builder = builder.setProxy(hostProxy);
-                    // Only set credentials if provided.
-                    if (!Strings.isNullOrEmpty(proxyUser) && !Strings.isNullOrEmpty(proxyPass)) {
-                        proxyUsageMsg += " with credentials for " + proxyUser;
-                        credsProvider.setCredentials(
+            if (!isProxyExempted(url, noProxyPatterns)) {
+                proxyUsageMsg += "Using proxy: " + proxyName + ":" + proxyPort;
+                final HttpHost hostProxy = new HttpHost(proxyName, proxyPort);
+                builder = builder.setProxy(hostProxy);
+                // Only set credentials if provided.
+                if (!Strings.isNullOrEmpty(proxyUser) && !Strings.isNullOrEmpty(proxyPass)) {
+                    proxyUsageMsg += " with credentials for " + proxyUser;
+                    credsProvider.setCredentials(
                             new AuthScope(proxyName, proxyPort),
                             new UsernamePasswordCredentials(proxyUser, proxyPass)
-                        );
-                    }
+                    );
                 }
             }
         }
@@ -103,7 +99,7 @@ public abstract class AbstractApiCall {
         // Bypassing proxy for internal addresses by default
         for (final Pattern p : Iterables.concat(noProxyPatterns, LOCALHOST_PATTERNS)) {
             matcher = p.matcher(urlStr);
-            if(matcher.find()) {
+            if (matcher.find()) {
                 return true;
             }
         }
@@ -125,7 +121,7 @@ public abstract class AbstractApiCall {
             }
         }
 
-        if  (statusCode == HttpStatus.SC_PROXY_AUTHENTICATION_REQUIRED) {
+        if (statusCode == HttpStatus.SC_PROXY_AUTHENTICATION_REQUIRED) {
             throw new MeasureApiCallException(apiCallPrefix + " " + HttpStatus.SC_PROXY_AUTHENTICATION_REQUIRED + " Proxy Authentication Required");
         }
 
@@ -146,10 +142,10 @@ public abstract class AbstractApiCall {
             final MeasureApiErrorResponse out;
             try {
                 out = new Gson().fromJson(body, MeasureApiErrorResponse.class);
-            } catch(final Exception ex) {
+            } catch (final Exception ex) {
                 return Optional.empty();
             }
-            if (out == null || out.alertMessages.size() == 0) {
+            if (out == null || out.alertMessages.isEmpty()) {
                 return Optional.empty();
             }
             final AlertMessage am0 = out.alertMessages.get(0);

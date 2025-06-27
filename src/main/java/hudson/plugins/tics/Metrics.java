@@ -1,17 +1,18 @@
 package hudson.plugins.tics;
 
-import java.lang.reflect.Field;
-
-import org.kohsuke.stapler.DataBoundConstructor;
-
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import org.kohsuke.stapler.DataBoundConstructor;
 
-/** See resources/../Metrics/config.jelly for view that is used to configure this model */
+import java.lang.reflect.Field;
+
+/**
+ * See resources/../Metrics/config.jelly for view that is used to configure this model
+ */
 public class Metrics extends AbstractDescribableImpl<Metrics> {
     public final boolean ABSTRACTINTERPRETATION;
     public final boolean ACCUCHANGERATE;
@@ -79,7 +80,7 @@ public class Metrics extends AbstractDescribableImpl<Metrics> {
             , final boolean SYSTEMTESTCOVERAGE
             , final boolean TOTALTESTCOVERAGE
             , final boolean UNITTESTCOVERAGE
-            ) {
+    ) {
         this.ABSTRACTINTERPRETATION = ABSTRACTINTERPRETATION;
         this.ACCUCHANGERATE = ACCUCHANGERATE;
         this.ACCUFIXRATE = ACCUFIXRATE;
@@ -152,6 +153,7 @@ public class Metrics extends AbstractDescribableImpl<Metrics> {
 
     @Extension
     public static class DescriptorImpl extends Descriptor<Metrics> {
+        @NonNull
         @Override
         public String getDisplayName() {
             return "Metrics";
@@ -163,7 +165,7 @@ public class Metrics extends AbstractDescribableImpl<Metrics> {
         for (final Field f : this.getClass().getFields()) {
             final boolean enabled;
             try {
-                enabled = (Boolean)f.get(this);
+                enabled = (Boolean) f.get(this);
             } catch (final Exception e) {
                 Throwables.throwIfUnchecked(e);
                 throw new RuntimeException(e);

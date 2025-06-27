@@ -1,16 +1,6 @@
 package hudson.plugins.tics;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import org.apache.http.client.utils.URIBuilder;
-import org.joda.time.DateTime;
-
 import com.google.common.collect.ImmutableMap;
-
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.Descriptor;
@@ -20,6 +10,14 @@ import hudson.plugins.tics.TicsPublisher.InvalidTicsViewerUrl;
 import hudson.tasks.Publisher;
 import hudson.util.DescribableList;
 import jenkins.tasks.SimpleBuildStep;
+import org.apache.http.client.utils.URIBuilder;
+import org.joda.time.DateTime;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Note: the fields of TicsPublisherBuildAction are serialized in Jenkins' build.xml files,
@@ -73,8 +71,7 @@ public class TicsPublisherBuildAction extends AbstractTicsPublisherAction implem
     public static <T extends Publisher> T getPublisher(final Run<?, ?> run, final Class<T> type) {
         // Pipeline runs are not an instance of AbstractProject
 
-        if (run.getParent() instanceof AbstractProject<?, ?>) {
-            final AbstractProject<?, ?> project = (AbstractProject<?, ?>) run.getParent();
+        if (run.getParent() instanceof AbstractProject<?, ?> project) {
             final DescribableList<Publisher, Descriptor<Publisher>> publishersList = project.getPublishersList();
             for (final Publisher publisher : publishersList) {
                 if (type.isInstance(publisher)) {
