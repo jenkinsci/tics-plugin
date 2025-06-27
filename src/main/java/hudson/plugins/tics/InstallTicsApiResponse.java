@@ -1,6 +1,9 @@
 package hudson.plugins.tics;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class InstallTicsApiResponse {
+    @SuppressFBWarnings({"UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD", "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD"})
     public static class Links {
         public String setPropPath;
         public String queryArtifact;

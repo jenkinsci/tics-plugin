@@ -1,9 +1,9 @@
 package hudson.plugins.tics;
 
+import hudson.model.Run;
+
 import java.util.List;
 import java.util.Objects;
-
-import hudson.model.Run;
 
 public class TicsPublisherProjectAction extends AbstractTicsPublisherAction {
     public final Run<?, ?> run;
@@ -35,7 +35,7 @@ public class TicsPublisherProjectAction extends AbstractTicsPublisherAction {
                 }
                 if (Objects.equals(ticsPath, action.ticsPath) // #30349: differentiate between multiple publish steps within a single pipeline invocation
                         || this.ticsPath == null // happens for builds at the time that TicsPublisherProjectAction did not yet store ticsPath
-                        ) {
+                ) {
                     return action;
                 }
             }

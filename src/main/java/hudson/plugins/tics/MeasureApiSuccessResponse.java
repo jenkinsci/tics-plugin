@@ -1,17 +1,18 @@
 package hudson.plugins.tics;
 
-import java.util.List;
-
-import org.joda.time.Instant;
-
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Lists;
-
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.joda.time.Instant;
 
-/** Models part of the api/public/v1/Measure response that is needed for our Jenkins plugin */
-@SuppressFBWarnings({"UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD"})
+import java.util.List;
+
+/**
+ * Models part of the api/public/v1/Measure response that is needed for our Jenkins plugin
+ */
+@SuppressFBWarnings("UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD")
 public class MeasureApiSuccessResponse<T> {
     public static class MetricValue<T> {
         public T value;
@@ -41,11 +42,11 @@ public class MeasureApiSuccessResponse<T> {
         public TqiVersion() { /* for gson */ }
 
         @Override
-        public int compareTo(final TqiVersion that) {
+        public int compareTo(@NonNull final TqiVersion that) {
             return ComparisonChain.start()
-                .compare(this.major, that.major)
-                .compare(this.minor, that.minor)
-                .result();
+                    .compare(this.major, that.major)
+                    .compare(this.minor, that.minor)
+                    .result();
         }
 
         @Override
@@ -56,6 +57,7 @@ public class MeasureApiSuccessResponse<T> {
             result = prime * result + this.minor;
             return result;
         }
+
         @Override
         public boolean equals(final Object obj) {
             if (this == obj) {

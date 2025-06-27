@@ -4,37 +4,25 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.4</version>
+        <version>5.17</version>
         <relativePath />
     </parent>
 
     <groupId>io.jenkins.plugins</groupId>
     <artifactId>tics</artifactId>
     <packaging>hpi</packaging>
-    <version>2024.1.1.2-SNAPSHOT</version>
+    <version>2024.1.3-SNAPSHOT</version>
     <properties>
-        <jenkins.version>2.289.1</jenkins.version>
-        <java.level>8</java.level>
-
-        <!-- http://docs.codehaus.org/display/MAVENUSER/POM+Element+for+Source+File+Encoding -->
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
+        <jenkins.baseline>2.479</jenkins.baseline>
+        <jenkins.version>${jenkins.baseline}.3</jenkins.version>
         <hpi.compatibleSinceVersion>2020.3.0.6</hpi.compatibleSinceVersion>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
-        <!-- define all plugin versions -->
-        <maven-clean-plugin.version>2.4.1</maven-clean-plugin.version>
-        <maven-compiler-plugin.version>2.3.2</maven-compiler-plugin.version>
-        <maven-dependency-plugin.version>2.1</maven-dependency-plugin.version>
-        <maven-jar-plugin.version>2.3.1</maven-jar-plugin.version>
-        <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
-        <maven-resources-plugin.version>2.4.3</maven-resources-plugin.version>
-        <maven-source-plugin.version>2.1.2</maven-source-plugin.version>
-        <maven-surefire-plugin.version>2.7.2</maven-surefire-plugin.version>
     </properties>
-    
+
     <name>TICS Plugin</name>
     <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
+
     <licenses>
         <license>
             <name>MIT License</name>
@@ -66,154 +54,56 @@
             <id>maven</id>
             <url>https://mvnrepository.com/artifact/joda-time/joda-time</url>
         </repository>
-
     </repositories>
+
     <pluginRepositories>
         <pluginRepository>
             <id>repo.jenkins-ci.org</id>
             <url>https://repo.jenkins-ci.org/public/</url>
         </pluginRepository>
     </pluginRepositories>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
-                <artifactId>bom-2.164.x</artifactId>
-                <version>10</version>
+                <artifactId>bom-${jenkins.baseline}.x</artifactId>
+                <version>4948.vcf1d17350668</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
         </dependencies>
     </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>structs</artifactId>
-            <version>1.20</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>credentials</artifactId>
-            <version>2.3.0</version>
         </dependency>
         <dependency>
            <groupId>org.jenkins-ci.plugins</groupId>
            <artifactId>plain-credentials</artifactId>
-           <version>1.7</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.3.6</version>
-        </dependency>
-       <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-text -->
-        <dependency>
-           <groupId>org.apache.commons</groupId>
-           <artifactId>commons-text</artifactId>
-           <version>1.10.0</version>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>apache-httpcomponents-client-4-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>2.10.1</version>
+            <groupId>io.jenkins.plugins</groupId>
+           <artifactId>commons-text-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time</artifactId>
-            <version>2.3</version>
+            <groupId>io.jenkins.plugins</groupId>
+            <artifactId>gson-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>27.0.1-jre</version>
+            <groupId>io.jenkins.plugins</groupId>
+            <artifactId>joda-time-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.jsoup</groupId>
+            <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>jsoup</artifactId>
-            <version>1.13.1</version>
         </dependency>
     </dependencies>
-
-    <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-scm-plugin</artifactId>
-                    <version>1.11.2</version>
-                    <configuration>
-                        <connectionType>developerConnection</connectionType>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-clean-plugin</artifactId>
-                    <version>${maven-clean-plugin.version}</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>${maven-compiler-plugin.version}</version>
-                    <configuration>
-                        <source>${compileSource}</source>
-                        <target>${compileTarget}</target>
-                        <showDeprecation>true</showDeprecation>
-                        <showWarnings>true</showWarnings>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-enforcer-plugin</artifactId>
-                    <executions>
-                        <execution>
-                            <phase>none</phase>
-                        </execution>
-                    </executions>
-                    <configuration>
-                        <skip>true</skip>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <version>${maven-jar-plugin.version}</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-release-plugin</artifactId>
-                    <version>${maven-release-plugin.version}</version>
-                    <configuration>
-                        <allowTimestampedSnapshots>true</allowTimestampedSnapshots>
-                        <autoVersionSubmodules>true</autoVersionSubmodules>
-                        <goals>clean deploy</goals>
-                        <preparationGoals>clean deploy</preparationGoals>
-                        <releaseProfiles>release</releaseProfiles>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-source-plugin</artifactId>
-                    <version>${maven-source-plugin.version}</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>${maven-surefire-plugin.version}</version>
-                    <configuration>
-                        <parallel>methods</parallel>
-                        <testFailureIgnore>true</testFailureIgnore>
-                        <threadCount>4</threadCount>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>com.github.spotbugs</groupId>
-                    <artifactId>spotbugs-maven-plugin</artifactId>
-                    <version>4.1.3</version>
-                    <executions>
-                        <execution>
-                            <phase>none</phase>
-                        </execution>
-                    </executions>
-                    <configuration>
-                        <skip>true</skip>
-                    </configuration>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-    </build>
 
 </project>

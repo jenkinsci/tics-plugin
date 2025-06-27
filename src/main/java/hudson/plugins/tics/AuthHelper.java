@@ -1,17 +1,5 @@
 package hudson.plugins.tics;
 
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import org.apache.commons.lang3.tuple.Pair;
-import org.jenkinsci.plugins.plaincredentials.StringCredentials;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.QueryParameter;
-
 import com.cloudbees.plugins.credentials.CredentialsMatcher;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
@@ -26,7 +14,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-
 import hudson.EnvVars;
 import hudson.Util;
 import hudson.model.Item;
@@ -35,9 +22,21 @@ import hudson.security.ACL;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import jenkins.model.Jenkins;
+import org.apache.commons.lang3.tuple.Pair;
+import org.jenkinsci.plugins.plaincredentials.StringCredentials;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.QueryParameter;
+
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public final class AuthHelper {
-    private AuthHelper() {}
+    private AuthHelper() {
+    }
 
     public static final String TICSAUTHTOKEN = "TICSAUTHTOKEN";
 
@@ -48,8 +47,8 @@ public final class AuthHelper {
         if (Strings.isNullOrEmpty(credentialsId)) {
             return Optional.empty();
         }
-        final List<DomainRequirement> domainRequirements = Collections.<DomainRequirement>emptyList();
-        final List<T> list = CredentialsProvider.lookupCredentials(clazz, job, ACL.SYSTEM, domainRequirements);
+        final List<DomainRequirement> domainRequirements = Collections.emptyList();
+        final List<T> list = CredentialsProvider.lookupCredentialsInItem(clazz, job, ACL.SYSTEM2, domainRequirements);
 
         for (final T c : list) {
             if (credentialsId.equals(c.getId())) {
@@ -91,26 +90,25 @@ public final class AuthHelper {
             final String ticsTokenEnv = buildEnv.get(TICSAUTHTOKEN);
             if (!Strings.isNullOrEmpty(ticsTokenEnv)) {
                 return AuthHelper.lookupCredentials(StringCredentials.class, job, ticsTokenEnv)
-                        .map(c -> Optional.of(c.getSecret().getPlainText()))
-                        .orElse(Optional.of(ticsTokenEnv));
+                        .map(c -> c.getSecret().getPlainText()).or(() -> Optional.of(ticsTokenEnv));
             }
         }
 
         return Optional.empty();
     }
 
-    private static Pair<String, String> decodeTokenToUsernamePassword(final String token) {
+    protected static Pair<String, String> decodeTokenToUsernamePassword(final String token) {
         try {
             final byte[] decodedToken = java.util.Base64.getDecoder().decode(token);
             final String decodedTokenStr = new String(decodedToken, StandardCharsets.UTF_8);
-            final String[] splitted = decodedTokenStr.split(":");
+            final String[] splitted = decodedTokenStr.split(":", 2);
             if (splitted.length != 2) {
                 throw new IllegalStateException("Unexpected number of parts");
             }
             final Pair<String, String> splittedPair = Pair.of(splitted[0], splitted[1]);
             return splittedPair;
         } catch (final Exception ex) {
-          throw new IllegalArgumentException("Malformed authentication token. Please make sure you are using a valid token from the TICS Viewer.", ex);
+            throw new IllegalArgumentException("Malformed authentication token. Please make sure you are using a valid token from the TICS Viewer.", ex);
         }
     }
 
@@ -127,7 +125,9 @@ public final class AuthHelper {
         return out;
     }
 
-    /** Called by Jenkins to fill credentials dropdown list */
+    /**
+     * Called by Jenkins to fill credentials dropdown list
+     */
     public static ListBoxModel fillCredentialsDropdown(@AncestorInPath final Item context, @QueryParameter final String credentialsId) {
         final List<DomainRequirement> domainRequirements;
         final CredentialsMatcher credentialsMatcher = CredentialsMatchers.anyOf(CredentialsMatchers.instanceOf(StandardCredentials.class));
@@ -142,12 +142,12 @@ public final class AuthHelper {
             }
         }
         if (credentialsId == null) {
-            domainRequirements = Collections.<DomainRequirement>emptyList();
+            domainRequirements = Collections.emptyList();
         } else {
             domainRequirements = URIRequirementBuilder.fromUri(credentialsId.trim()).build();
         }
         return result
                 .includeEmptyValue()
-                .includeMatchingAs(ACL.SYSTEM, context, StandardCredentials.class, domainRequirements, credentialsMatcher);
+                .includeMatchingAs(ACL.SYSTEM2, context, StandardCredentials.class, domainRequirements, credentialsMatcher);
     }
 }

@@ -1,34 +1,31 @@
 package hudson.plugins.tics;
 
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import edu.umd.cs.findbugs.annotations.Nullable;
+import hudson.plugins.tics.MeasureApiCall.MeasureApiCallException;
+import hudson.plugins.tics.MeasureApiSuccessResponse.Baseline;
+import hudson.plugins.tics.MeasureApiSuccessResponse.MetricValue;
+import hudson.plugins.tics.MeasureApiSuccessResponse.Run;
+import hudson.plugins.tics.MeasureApiSuccessResponse.TqiVersion;
+import org.joda.time.Instant;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Safelist;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import javax.annotation.Nullable;
-
-import org.joda.time.Instant;
-import org.jsoup.Jsoup;
-import org.jsoup.safety.Whitelist;
-
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-
-import hudson.plugins.tics.MeasureApiCall.MeasureApiCallException;
-import hudson.plugins.tics.MeasureApiSuccessResponse.Baseline;
-import hudson.plugins.tics.MeasureApiSuccessResponse.MetricValue;
-import hudson.plugins.tics.MeasureApiSuccessResponse.Run;
-import hudson.plugins.tics.MeasureApiSuccessResponse.TqiVersion;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
 public class TqiPublisherResultBuilder {
 
-    public static final ImmutableList<String> METRICS_3_11 = ImmutableList.of("tqi","tqiTestCoverage","tqiAbstrInt","tqiComplexity","tqiCompWarn","tqiCodingStd","tqiDupCode","tqiFanOut","tqiDeadCode","loc");
-    public static final ImmutableList<String> METRICS_4_0 = ImmutableList.of("tqi","tqiTestCoverage","tqiAbstrInt","tqiComplexity","tqiCompWarn","tqiCodingStd","tqiDupCode","tqiFanOut","tqiSecurity","loc");
+    public static final ImmutableList<String> METRICS_3_11 = ImmutableList.of("tqi", "tqiTestCoverage", "tqiAbstrInt", "tqiComplexity", "tqiCompWarn", "tqiCodingStd", "tqiDupCode", "tqiFanOut", "tqiDeadCode", "loc");
+    public static final ImmutableList<String> METRICS_4_0 = ImmutableList.of("tqi", "tqiTestCoverage", "tqiAbstrInt", "tqiComplexity", "tqiCompWarn", "tqiCodingStd", "tqiDupCode", "tqiFanOut", "tqiSecurity", "loc");
     public static final String TQI_VERSION = "tqiVersion";
     private final String ticsPath;
     private final MeasureApiCall measureApiCall;
@@ -39,7 +36,7 @@ public class TqiPublisherResultBuilder {
             final PrintStream logger,
             final MeasureApiCall apiCall,
             final String ticsPath
-            ) {
+    ) {
         this.logger = logger;
         this.ticsPath = ticsPath;
         this.measureApiCall = apiCall;
@@ -64,11 +61,11 @@ public class TqiPublisherResultBuilder {
         final List<MetricData.Run> runsData = new ArrayList<>();
         runsData.add(currentRun);
         runDatesDesc.stream().skip(1).findFirst()
-            .flatMap(run -> this.tryGetRunData("\u0394Previous", Optional.of(run.getStarted()), "Delta with previous run at " + this.formatDate(run.getStarted())))
-            .ifPresent(runsData::add);
+                .flatMap(run -> this.tryGetRunData("\u0394Previous", Optional.of(run.getStarted()), "Delta with previous run at " + this.formatDate(run.getStarted())))
+                .ifPresent(runsData::add);
         this.baseline.get()
-            .flatMap(bl -> this.tryGetRunData("\u0394" + bl.getName(), Optional.of(bl.getStarted()), "Delta with baseline '" + bl.getName() + "' at " + this.formatDate(bl.getStarted())))
-            .ifPresent(runsData::add);
+                .flatMap(bl -> this.tryGetRunData("\u0394" + bl.getName(), Optional.of(bl.getStarted()), "Delta with baseline '" + bl.getName() + "' at " + this.formatDate(bl.getStarted())))
+                .ifPresent(runsData::add);
         return new MetricData(currentRun.metricNames, runsData, this.ticsPath, null);
     }
 
@@ -82,9 +79,10 @@ public class TqiPublisherResultBuilder {
     }
 
     private MetricData.Run getRunDataOrThrow(final String runName, final Optional<Instant> deltaDate, final String description) throws MeasureApiCallException {
-        final String metricExpr = deltaDate.isPresent()
-                ? this.metrics.get().stream().map(m -> "Delta(" + m + "," + (deltaDate.get().getMillis()/1000L) +")").collect(joining(","))
-                : this.metrics.get().stream().collect(joining(","));
+        final String metricExpr = deltaDate.map(instant -> this.metrics.get().stream()
+                        .map(m -> "Delta(" + m + "," + (instant.getMillis() / 1000L) + ")")
+                        .collect(joining(",")))
+                .orElseGet(() -> String.join(",", this.metrics.get()));
         final MeasureApiSuccessResponse<Number> resp = this.measureApiCall.execute(MeasureApiCall.RESPONSE_NUMBER_TYPETOKEN, this.ticsPath, metricExpr);
         final List<String> metricNames = resp.metrics.stream()
                 .map(m -> m.fullName)
@@ -97,13 +95,13 @@ public class TqiPublisherResultBuilder {
             // However, formattedValue can contain HTML, such as for delta metrics and for errors.
             // We use JSoup for stripping this HTML. Note that the formattedValue will be rendered by Jelly (which does HTML-escaping),
             // so note that JSoup.clean() is not used for preventing XSS vulnerabilities.
-            final String formattedValueStripped = Jsoup.clean(mv.formattedValue, Whitelist.none());
+            final String formattedValueStripped = Jsoup.clean(mv.formattedValue, Safelist.none());
 
             metricValues.add(new MetricData.MetricValue(
                     mv.status,
                     formattedValueStripped,
                     mv.letter
-                    ));
+            ));
         }
         return new MetricData.Run(
                 runName,
@@ -111,7 +109,7 @@ public class TqiPublisherResultBuilder {
                 metricNames,
                 metricValues,
                 deltaDate.map(Instant::toString).orElse(null)
-                );
+        );
     }
 
     private boolean doesTqiVersionIncludeSecurity() {
@@ -132,13 +130,13 @@ public class TqiPublisherResultBuilder {
     private List<Run> getRunDatesDescending() throws MeasureApiCallException {
         final MeasureApiSuccessResponse<List<Run>> resp = measureApiCall.execute(MeasureApiCall.RESPONSE_RUNS_TYPETOKEN, TqiPublisherResultBuilder.this.ticsPath, "runs");
         if (resp.data.isEmpty()) {
-            return new ArrayList<Run>();
+            return new ArrayList<>();
         }
         final MetricValue<List<Run>> mv = resp.data.get(0);
         return Lists.reverse(Optional.ofNullable(mv.value).orElseGet(ArrayList::new));
     }
 
-    private final Supplier<Optional<Baseline>> baseline = Suppliers.memoize(new Supplier<Optional<Baseline>>() {
+    private final Supplier<Optional<Baseline>> baseline = Suppliers.memoize(new Supplier<>() {
         @Override
         public Optional<Baseline> get() {
             final MeasureApiSuccessResponse<List<Baseline>> resp;
@@ -156,7 +154,7 @@ public class TqiPublisherResultBuilder {
             if (baselines == null || baselines.isEmpty()) {
                 return Optional.empty();
             } else {
-                return Optional.of(baselines.get(baselines.size()-1));
+                return Optional.of(baselines.get(baselines.size() - 1));
             }
         }
     });

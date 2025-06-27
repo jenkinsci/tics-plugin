@@ -1,14 +1,13 @@
 package hudson.plugins.tics;
 
-import static org.junit.Assert.assertEquals;
+import com.google.common.collect.ImmutableList;
+import hudson.EnvVars;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.collect.ImmutableList;
-import org.junit.Test;
-
-import hudson.EnvVars;
+import static org.junit.Assert.assertEquals;
 
 public class TicsAnalyzerTest {
 
@@ -20,7 +19,7 @@ public class TicsAnalyzerTest {
     public String credentialsId = "auth-token";
 
 
-    private TicsAnalyzer getTicsAnalyzer(final Metrics calcMetrics, final Metrics recalcMetrics, final TicsArguments ticsArgs){
+    private TicsAnalyzer getTicsAnalyzer(final Metrics calcMetrics, final Metrics recalcMetrics, final TicsArguments ticsArgs) {
         return new TicsAnalyzer(ticsPath
                 , ticsConfiguration
                 , ticsArgs.projectName
