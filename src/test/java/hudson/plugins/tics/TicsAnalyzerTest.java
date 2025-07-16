@@ -2,40 +2,41 @@ package hudson.plugins.tics;
 
 import com.google.common.collect.ImmutableList;
 import hudson.EnvVars;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.stream.Stream;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class TicsAnalyzerTest {
+class TicsAnalyzerTest {
 
-    public String ticsPath = "";
-    public String ticsConfiguration = "http://192.168.1.204:42506/tiobeweb/TICS/api/cfg?name=default";
-    public String environmentVariables = "";
-    public boolean createTmpdir = true;
-    public boolean installTics = false;
-    public String credentialsId = "auth-token";
+    private static final String TICS_PATH = "";
+    private static final String STRING = "http://192.168.1.204:42506/tiobeweb/TICS/api/cfg?name=default";
+    private static final String ENVIRONMENT_VARIABLES = "";
+    private static final boolean CREATE_TMPDIR = true;
+    private static final boolean INSTALL_TICS = false;
+    private static final String CREDENTIALS_ID = "auth-token";
 
-
-    private TicsAnalyzer getTicsAnalyzer(final Metrics calcMetrics, final Metrics recalcMetrics, final TicsArguments ticsArgs) {
-        return new TicsAnalyzer(ticsPath
-                , ticsConfiguration
+    private static TicsAnalyzer getTicsAnalyzer(final Metrics calcMetrics, final Metrics recalcMetrics, final TicsArguments ticsArgs) {
+        return new TicsAnalyzer(TICS_PATH
+                , STRING
                 , ticsArgs.projectName
                 , ticsArgs.branchName
                 , ticsArgs.branchDirectory
-                , environmentVariables
-                , createTmpdir
+                , ENVIRONMENT_VARIABLES
+                , CREATE_TMPDIR
                 , ticsArgs.tmpdir
                 , ticsArgs.extraArguments
                 , calcMetrics
                 , recalcMetrics
-                , installTics
-                , credentialsId);
+                , INSTALL_TICS
+                , CREDENTIALS_ID);
     }
 
-    private Metrics getMetrics(final boolean codingStandards, final boolean compilerWarnings, final boolean finalize, final boolean loc) {
+    private static Metrics getMetrics(final boolean codingStandards, final boolean compilerWarnings, final boolean finalize, final boolean loc) {
         return new Metrics(
                 false,
                 false,
@@ -73,111 +74,81 @@ public class TicsAnalyzerTest {
     }
 
     enum Platform {
-        Linux,
-        Windows,
+        LINUX,
+        WINDOWS,
     }
 
-    private static class TicsArguments {
-        public String projectName;
-        public String branchName;
-        public String branchDirectory;
-        public String tmpdir;
-        public String extraArguments;
-
-        public TicsArguments(final String projectName, final String branchName, final String branchDirectory, final String tmpdir, final String extraArguments) {
-            this.projectName = projectName;
-            this.branchName = branchName;
-            this.branchDirectory = branchDirectory;
-            this.tmpdir = tmpdir;
-            this.extraArguments = extraArguments;
-        }
+    private record TicsArguments(String projectName, String branchName, String branchDirectory, String tmpdir,
+                                 String extraArguments) {
     }
 
-    private static class TicsAnalyzerCmdTestCase {
-        public TicsAnalyzer analyzer;
-        public Platform platform;
-        public String expectedResult;
-
-        public TicsAnalyzerCmdTestCase(final TicsAnalyzer analyzer, final Platform platform, final String expectedResult) {
-            this.analyzer = analyzer;
-            this.platform = platform;
-            this.expectedResult = expectedResult;
-        }
-    }
-
-    private List<TicsAnalyzerCmdTestCase> getTicsAnalysisCmdEscapedTestCases() {
-        final List<TicsAnalyzerCmdTestCase> testCases = new ArrayList<>();
-
+    private static Stream<Arguments> parameters() {
         final TicsArguments windowsArgs = new TicsArguments("cpp game", "master branch", "D:\\Development\\dev_test\\projects\\cpp game", "D:\\Development\\dev_test\\tmp\\33733-tmpdir", "");
         final TicsArguments linuxArgs = new TicsArguments("cpp game", "master branch", "/home/leila/development/dev-test/projects/cpp game", "/home/leila/development/dev-test/tmp/33733-tmpdir", "");
         final TicsArguments noBranchAndTmpdirArgs = new TicsArguments("cpp-game", "", "", "", "");
 
-        // Calc and Recalc
-        testCases.add(new TicsAnalyzerCmdTestCase(getTicsAnalyzer(getMetrics(true, false, false, true), getMetrics(false, true, true, false), windowsArgs),
-                Platform.Windows,
-                "TICSQServer.exe -project 'cpp game' -branchname 'master branch' -branchdir 'D:\\Development\\dev_test\\projects\\cpp game' -tmpdir 'D:\\Development\\dev_test\\tmp\\33733-tmpdir' -calc CODINGSTANDARD,LOC -recalc COMPILERWARNING,FINALIZE"
-        ));
+        return Stream.of(
+                // Calc and Recalc
+                Arguments.of(getTicsAnalyzer(getMetrics(true, false, false, true), getMetrics(false, true, true, false), windowsArgs),
+                        Platform.WINDOWS,
+                        "TICSQServer.exe -project 'cpp game' -branchname 'master branch' -branchdir 'D:\\Development\\dev_test\\projects\\cpp game' -tmpdir 'D:\\Development\\dev_test\\tmp\\33733-tmpdir' -calc CODINGSTANDARD,LOC -recalc COMPILERWARNING,FINALIZE"
+                ),
 
-        // Only Calc
-        testCases.add(new TicsAnalyzerCmdTestCase(getTicsAnalyzer(getMetrics(true, false, false, true), getMetrics(false, false, false, false), windowsArgs),
-                Platform.Windows,
-                "TICSQServer.exe -project 'cpp game' -branchname 'master branch' -branchdir 'D:\\Development\\dev_test\\projects\\cpp game' -tmpdir 'D:\\Development\\dev_test\\tmp\\33733-tmpdir' -calc CODINGSTANDARD,LOC"
-        ));
+                // Only Calc
+                Arguments.of(getTicsAnalyzer(getMetrics(true, false, false, true), getMetrics(false, false, false, false), windowsArgs),
+                        Platform.WINDOWS,
+                        "TICSQServer.exe -project 'cpp game' -branchname 'master branch' -branchdir 'D:\\Development\\dev_test\\projects\\cpp game' -tmpdir 'D:\\Development\\dev_test\\tmp\\33733-tmpdir' -calc CODINGSTANDARD,LOC"
+                ),
 
-        // Only Recalc
-        testCases.add(new TicsAnalyzerCmdTestCase(getTicsAnalyzer(getMetrics(false, false, false, false), getMetrics(false, true, true, false), windowsArgs),
-                Platform.Windows,
-                "TICSQServer.exe -project 'cpp game' -branchname 'master branch' -branchdir 'D:\\Development\\dev_test\\projects\\cpp game' -tmpdir 'D:\\Development\\dev_test\\tmp\\33733-tmpdir' -recalc COMPILERWARNING,FINALIZE"
-        ));
+                // Only Recalc
+                Arguments.of(getTicsAnalyzer(getMetrics(false, false, false, false), getMetrics(false, true, true, false), windowsArgs),
+                        Platform.WINDOWS,
+                        "TICSQServer.exe -project 'cpp game' -branchname 'master branch' -branchdir 'D:\\Development\\dev_test\\projects\\cpp game' -tmpdir 'D:\\Development\\dev_test\\tmp\\33733-tmpdir' -recalc COMPILERWARNING,FINALIZE"
+                ),
 
-        // No branch and no tmpdir
-        testCases.add(new TicsAnalyzerCmdTestCase(getTicsAnalyzer(getMetrics(true, false, false, true), getMetrics(false, true, true, false), noBranchAndTmpdirArgs),
-                Platform.Windows,
-                "TICSQServer.exe -project 'cpp-game' -calc CODINGSTANDARD,LOC -recalc COMPILERWARNING,FINALIZE"
-        ));
+                // No branch and no tmpdir
+                Arguments.of(getTicsAnalyzer(getMetrics(true, false, false, true), getMetrics(false, true, true, false), noBranchAndTmpdirArgs),
+                        Platform.WINDOWS,
+                        "TICSQServer.exe -project 'cpp-game' -calc CODINGSTANDARD,LOC -recalc COMPILERWARNING,FINALIZE"
+                ),
 
-        // Calc and Recalc
-        testCases.add(new TicsAnalyzerCmdTestCase(getTicsAnalyzer(getMetrics(true, false, false, true), getMetrics(false, true, true, false), linuxArgs),
-                Platform.Linux,
-                "TICSQServer -project 'cpp game' -branchname 'master branch' -branchdir '/home/leila/development/dev-test/projects/cpp game' -tmpdir '/home/leila/development/dev-test/tmp/33733-tmpdir' -calc CODINGSTANDARD,LOC -recalc COMPILERWARNING,FINALIZE"
-        ));
+                // Calc and Recalc
+                Arguments.of(getTicsAnalyzer(getMetrics(true, false, false, true), getMetrics(false, true, true, false), linuxArgs),
+                        Platform.LINUX,
+                        "TICSQServer -project 'cpp game' -branchname 'master branch' -branchdir '/home/leila/development/dev-test/projects/cpp game' -tmpdir '/home/leila/development/dev-test/tmp/33733-tmpdir' -calc CODINGSTANDARD,LOC -recalc COMPILERWARNING,FINALIZE"
+                ),
 
-        // Only Calc
-        testCases.add(new TicsAnalyzerCmdTestCase(getTicsAnalyzer(getMetrics(true, false, false, true), getMetrics(false, false, false, false), linuxArgs),
-                Platform.Linux,
-                "TICSQServer -project 'cpp game' -branchname 'master branch' -branchdir '/home/leila/development/dev-test/projects/cpp game' -tmpdir '/home/leila/development/dev-test/tmp/33733-tmpdir' -calc CODINGSTANDARD,LOC"
-        ));
+                // Only Calc
+                Arguments.of(getTicsAnalyzer(getMetrics(true, false, false, true), getMetrics(false, false, false, false), linuxArgs),
+                        Platform.LINUX,
+                        "TICSQServer -project 'cpp game' -branchname 'master branch' -branchdir '/home/leila/development/dev-test/projects/cpp game' -tmpdir '/home/leila/development/dev-test/tmp/33733-tmpdir' -calc CODINGSTANDARD,LOC"
+                ),
 
-        // Only Recalc
-        testCases.add(new TicsAnalyzerCmdTestCase(getTicsAnalyzer(getMetrics(false, false, false, false), getMetrics(false, true, true, false), linuxArgs),
-                Platform.Linux,
-                "TICSQServer -project 'cpp game' -branchname 'master branch' -branchdir '/home/leila/development/dev-test/projects/cpp game' -tmpdir '/home/leila/development/dev-test/tmp/33733-tmpdir' -recalc COMPILERWARNING,FINALIZE"
-        ));
+                // Only Recalc
+                Arguments.of(getTicsAnalyzer(getMetrics(false, false, false, false), getMetrics(false, true, true, false), linuxArgs),
+                        Platform.LINUX,
+                        "TICSQServer -project 'cpp game' -branchname 'master branch' -branchdir '/home/leila/development/dev-test/projects/cpp game' -tmpdir '/home/leila/development/dev-test/tmp/33733-tmpdir' -recalc COMPILERWARNING,FINALIZE"
+                ),
 
-        // No branch and no tmpdir
-        testCases.add(new TicsAnalyzerCmdTestCase(getTicsAnalyzer(getMetrics(true, false, false, true), getMetrics(false, true, true, false), noBranchAndTmpdirArgs),
-                Platform.Linux,
-                "TICSQServer -project 'cpp-game' -calc CODINGSTANDARD,LOC -recalc COMPILERWARNING,FINALIZE"
-        ));
-
-
-        return testCases;
+                // No branch and no tmpdir
+                Arguments.of(getTicsAnalyzer(getMetrics(true, false, false, true), getMetrics(false, true, true, false), noBranchAndTmpdirArgs),
+                        Platform.LINUX,
+                        "TICSQServer -project 'cpp-game' -calc CODINGSTANDARD,LOC -recalc COMPILERWARNING,FINALIZE"
+                ));
     }
 
-    @Test
-    public void testGetTicsAnalysis() {
+    @ParameterizedTest
+    @MethodSource("parameters")
+    void testGetTicsAnalysis(final TicsAnalyzer analyzer, final Platform platform, final String expectedResult) {
         final EnvVars buildEnv = new EnvVars();
 
-        for (final TicsAnalyzerCmdTestCase testCase : getTicsAnalysisCmdEscapedTestCases()) {
-            final boolean isLauncherUnix = testCase.platform == Platform.Linux;
-            final ImmutableList<String> ticsAnalysisCmd = testCase.analyzer.getTicsQServerArgs(buildEnv, isLauncherUnix);
-
-            assertEquals(testCase.expectedResult, testCase.analyzer.getTicsAnalysisCmd(ticsAnalysisCmd));
-        }
+        final boolean isLauncherUnix = platform == Platform.LINUX;
+        final ImmutableList<String> ticsAnalysisCmd = analyzer.getTicsQServerArgs(buildEnv, isLauncherUnix);
+        assertEquals(expectedResult, analyzer.getTicsAnalysisCmd(ticsAnalysisCmd));
     }
 
     @Test
-    public void testCreateCommandLinux() {
+    void testCreateCommandLinux() {
         final EnvVars buildEnv = new EnvVars();
 
         final TicsAnalyzer analyzer = getTicsAnalyzer(
@@ -196,7 +167,7 @@ public class TicsAnalyzerTest {
     }
 
     @Test
-    public void testCreateCommandWindows() {
+    void testCreateCommandWindows() {
         final EnvVars buildEnv = new EnvVars();
 
         final TicsAnalyzer analyzer = getTicsAnalyzer(
