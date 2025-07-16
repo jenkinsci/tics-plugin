@@ -9,7 +9,7 @@ on:
         description: Release version (e.g. 2025.1.0)
 
 jobs:
-  TICSQServer:
+  release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
       - name: Retrieve credentials
         run: |
           mkdir -p ~/.m2
-          curl -u "${{secrets.MAVEN_USERNAME}}:${{secrets.MAVEN_TOKEN}}" https://repo.jenkins-ci.org/setup/settings.xml -o ~/.m2/settings.xml
+          curl -f -u "${{secrets.MAVEN_USERNAME}}:${{secrets.MAVEN_TOKEN}}" https://repo.jenkins-ci.org/setup/settings.xml -o ~/.m2/settings.xml
       - name: Configure Git for tagging
         run: |
           git config user.name "github-actions[bot]"
