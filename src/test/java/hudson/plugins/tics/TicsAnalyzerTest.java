@@ -35,41 +35,184 @@ public class TicsAnalyzerTest {
                 , credentialsId);
     }
 
-    private Metrics getMetrics(final boolean codingStandards, final boolean compilerWarnings, final boolean finalize, final boolean loc) {
+    private Metrics getMetrics(final boolean codingStandard, final boolean compilerWarning, final boolean finalize, final boolean loc) {
+    	final boolean ABSTRACTINTERPRETATION = false;
+    	final boolean ACCUCHANGERATE = false;
+    	final boolean ACCUFIXRATE = false;
+    	final boolean ACCULINESADDED = false;
+    	final boolean ACCULINESCHANGED = false;
+    	final boolean ACCULINESDELETED = false;
+    	final boolean AI = false;
+    	final boolean ALL = false;
+    	final boolean AVGCYCLOMATICCOMPLEXITY = false;
+    	final boolean BEGIN = false;
+    	final boolean BUILDRELATIONS = false;
+    	final boolean CHANGEDFILES = false;
+    	final boolean CHANGERATE = false;
+    	final boolean CODINGSTANDARD = codingStandard;
+    	final boolean COMPILERWARNING = compilerWarning;
+    	final boolean CS = false;
+    	final boolean CW = false;
+    	final boolean CY = false;
+    	final boolean CYCLOMATICCOMPLEXITY = false;
+    	final boolean DEADCODE = false;
+    	final boolean DUP = false;
+    	final boolean DUPLICATEDCODE = false;
+    	final boolean DUPLICATEDCODECUSTOM = false;
+    	final boolean ELOC = false;
+    	final boolean END = false;
+    	final boolean FANOUT = false;
+    	final boolean FANOUT_INTEXT = false;
+    	final boolean FINALIZE = finalize;
+    	final boolean FIXRATE = false;
+    	final boolean GLOC = false;
+    	final boolean HIS_AVGCYCLOMATICCOMPLEXITY = false;
+    	final boolean HIS_CALLLEVELS = false;
+    	final boolean HIS_CALLLEVELS_MAX = false;
+    	final boolean HIS_CODINGSTANDARD = false;
+    	final boolean HIS_COMMENTDENSITY = false;
+    	final boolean HIS_FUNCCALLS = false;
+    	final boolean HIS_FUNCCALLS_MAX = false;
+    	final boolean HIS_FUNCCYCLE = false;
+    	final boolean HIS_FUNCCYCLE_MAX = false;
+    	final boolean HIS_FUNCSIZE = false;
+    	final boolean HIS_FUNCSIZE_MAX = false;
+    	final boolean HIS_GOTOSTATEMENTS = false;
+    	final boolean HIS_GOTOSTATEMENTS_MAX = false;
+    	final boolean HIS_MAXCYCLOMATICCOMPLEXITY = false;
+    	final boolean HIS_PARAMCOUNT = false;
+    	final boolean HIS_PARAMCOUNT_MAX = false;
+    	final boolean HIS_PATHCOUNT = false;
+    	final boolean HIS_PATHCOUNT_MAX = false;
+    	final boolean HIS_RETURNPOINTS = false;
+    	final boolean HIS_RETURNPOINTS_MAX = false;
+    	final boolean HIS_VOCF = false;
+    	final boolean INCLUDERELATIONS = false;
+    	final boolean INTEGRATIONBRANCHCOVERAGE = false;
+    	final boolean INTEGRATIONDECISIONCOVERAGE = false;
+    	final boolean INTEGRATIONFUNCTIONCOVERAGE = false;
+    	final boolean INTEGRATIONSTATEMENTCOVERAGE = false;
+    	final boolean INTEGRATIONTESTCOVERAGE = false;
+    	final boolean ITC = false;
+    	final boolean LINESADDED = false;
+    	final boolean LINESCHANGED = false;
+    	final boolean LINESDELETED = false;
+    	final boolean LOC = loc;
+    	final boolean MAXCYCLOMATICCOMPLEXITY = false;
+    	final boolean PATHCOUNT = false;
+    	final boolean PATHCOUNT_MAX = false;
+    	final boolean POSTANA = false;
+    	final boolean PREPARE = false;
+    	final boolean SEC = false;
+    	final boolean SECURITY = false;
+    	final boolean STC = false;
+    	final boolean SYSTEMBRANCHCOVERAGE = false;
+    	final boolean SYSTEMDECISIONCOVERAGE = false;
+    	final boolean SYSTEMFUNCTIONCOVERAGE = false;
+    	final boolean SYSTEMSTATEMENTCOVERAGE = false;
+    	final boolean SYSTEMTESTCOVERAGE = false;
+    	final boolean TOTALBRANCHCOVERAGE = false;
+    	final boolean TOTALDECISIONCOVERAGE = false;
+    	final boolean TOTALFUNCTIONCOVERAGE = false;
+    	final boolean TOTALSTATEMENTCOVERAGE = false;
+    	final boolean TOTALTESTCOVERAGE = false;
+    	final boolean TTC = false;
+    	final boolean UNITBRANCHCOVERAGE = false;
+    	final boolean UNITDECISIONCOVERAGE = false;
+    	final boolean UNITFUNCTIONCOVERAGE = false;
+    	final boolean UNITSTATEMENTCOVERAGE = false;
+    	final boolean UNITTESTCOVERAGE = false;
+    	final boolean UTC = false;
+
         return new Metrics(
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                codingStandards,
-                compilerWarnings,
-                false,
-                false,
-                false,
-                false,
-                finalize,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                loc,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false
-        );
+        		ABSTRACTINTERPRETATION,
+        		ACCUCHANGERATE,
+        		ACCUFIXRATE,
+        		ACCULINESADDED,
+        		ACCULINESCHANGED,
+        		ACCULINESDELETED,
+        		AI,
+        		ALL,
+        		AVGCYCLOMATICCOMPLEXITY,
+        		BEGIN,
+        		BUILDRELATIONS,
+        		CHANGEDFILES,
+        		CHANGERATE,
+        		CODINGSTANDARD,
+        		COMPILERWARNING,
+        		CS,
+        		CW,
+        		CY,
+        		CYCLOMATICCOMPLEXITY,
+        		DEADCODE,
+        		DUP,
+        		DUPLICATEDCODE,
+        		DUPLICATEDCODECUSTOM,
+        		ELOC,
+        		END,
+        		FANOUT,
+        		FANOUT_INTEXT,
+        		FINALIZE,
+        		FIXRATE,
+        		GLOC,
+        		HIS_AVGCYCLOMATICCOMPLEXITY,
+        		HIS_CALLLEVELS,
+        		HIS_CALLLEVELS_MAX,
+        		HIS_CODINGSTANDARD,
+        		HIS_COMMENTDENSITY,
+        		HIS_FUNCCALLS,
+        		HIS_FUNCCALLS_MAX,
+        		HIS_FUNCCYCLE,
+        		HIS_FUNCCYCLE_MAX,
+        		HIS_FUNCSIZE,
+        		HIS_FUNCSIZE_MAX,
+        		HIS_GOTOSTATEMENTS,
+        		HIS_GOTOSTATEMENTS_MAX,
+        		HIS_MAXCYCLOMATICCOMPLEXITY,
+        		HIS_PARAMCOUNT,
+        		HIS_PARAMCOUNT_MAX,
+        		HIS_PATHCOUNT,
+        		HIS_PATHCOUNT_MAX,
+        		HIS_RETURNPOINTS,
+        		HIS_RETURNPOINTS_MAX,
+        		HIS_VOCF,
+        		INCLUDERELATIONS,
+        		INTEGRATIONBRANCHCOVERAGE,
+        		INTEGRATIONDECISIONCOVERAGE,
+        		INTEGRATIONFUNCTIONCOVERAGE,
+        		INTEGRATIONSTATEMENTCOVERAGE,
+        		INTEGRATIONTESTCOVERAGE,
+        		ITC,
+        		LINESADDED,
+        		LINESCHANGED,
+        		LINESDELETED,
+        		LOC,
+        		MAXCYCLOMATICCOMPLEXITY,
+        		PATHCOUNT,
+        		PATHCOUNT_MAX,
+        		POSTANA,
+        		PREPARE,
+        		SEC,
+        		SECURITY,
+        		STC,
+        		SYSTEMBRANCHCOVERAGE,
+        		SYSTEMDECISIONCOVERAGE,
+        		SYSTEMFUNCTIONCOVERAGE,
+        		SYSTEMSTATEMENTCOVERAGE,
+        		SYSTEMTESTCOVERAGE,
+        		TOTALBRANCHCOVERAGE,
+        		TOTALDECISIONCOVERAGE,
+        		TOTALFUNCTIONCOVERAGE,
+        		TOTALSTATEMENTCOVERAGE,
+        		TOTALTESTCOVERAGE,
+        		TTC,
+        		UNITBRANCHCOVERAGE,
+        		UNITDECISIONCOVERAGE,
+        		UNITFUNCTIONCOVERAGE,
+        		UNITSTATEMENTCOVERAGE,
+        		UNITTESTCOVERAGE,
+        		UTC
+		);
     }
 
     enum Platform {
