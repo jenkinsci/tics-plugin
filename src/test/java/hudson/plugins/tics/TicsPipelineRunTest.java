@@ -1,35 +1,19 @@
 package hudson.plugins.tics;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.Test;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-public class TicsPipelineRunTest {
+class TicsPipelineRunTest {
 
-    private static class CreateMetricsObjectTestCase {
-        public List<String> metricsList;
-        public Metrics expectedResult;
-        public CreateMetricsObjectTestCase(final List<String> metrics, final Metrics createdMetricsObject) {
-            this.metricsList = metrics;
-            this.expectedResult = createdMetricsObject;
-        }
-    }
-
-    private List<CreateMetricsObjectTestCase> getCreateMetricsObjectTestCases() {
-        final List<CreateMetricsObjectTestCase> testCases = new ArrayList<>();
-
-        testCases.add(new CreateMetricsObjectTestCase(Arrays.asList("CODINGSTANDARD", "COMPILERWARNING"), getMetrics(true, true, false, false, false)));
-        testCases.add(new CreateMetricsObjectTestCase(Arrays.asList("BEGIN", "FINALIZE"), getMetrics(false, false, true, true, false)));
-        testCases.add(new CreateMetricsObjectTestCase(Arrays.asList("CODINGSTANDARD", "COMPILERWARNING", "BEGIN", "FINALIZE"), getMetrics(true, true, true, true, false)));
-
-        return testCases;
-    }
-
-    private Metrics getMetrics(final boolean codingStandard, final boolean compilerWarning, final boolean begin, final boolean finalize, final boolean loc) {
+    private static Metrics getMetrics(final boolean codingStandard, final boolean compilerWarning, final boolean begin, final boolean finalize, final boolean loc) {
         final boolean ABSTRACTINTERPRETATION = false;
         final boolean ACCUCHANGERATE = false;
         final boolean ACCUFIXRATE = false;
@@ -209,103 +193,112 @@ public class TicsPipelineRunTest {
         );
     }
 
-    @Test
-    public void testCreateMetricsObject() {
-        // Test cases where no exception is thrown
+    static Stream<Arguments> parameters() {
+        return Stream.of(
+                Arguments.of(Arrays.asList("CODINGSTANDARD", "COMPILERWARNING"), getMetrics(true, true, false, false, false)),
+                Arguments.of(Arrays.asList("BEGIN", "FINALIZE"), getMetrics(false, false, true, true, false)),
+                Arguments.of(Arrays.asList("CODINGSTANDARD", "COMPILERWARNING", "BEGIN", "FINALIZE"), getMetrics(true, true, true, true, false))
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("parameters")
+    void testCreateMetricsObject(List<String> metricsList, Metrics expectedResult) {
         final TicsPipelineRun ticsPipeLineRun = new TicsPipelineRun("myProject", "myBranch");
-        for (final CreateMetricsObjectTestCase testCase : getCreateMetricsObjectTestCases()) {
-            final Metrics createdMetricsObject = ticsPipeLineRun.createMetricsObject(testCase.metricsList);
+        final Metrics createdMetricsObject = ticsPipeLineRun.createMetricsObject(metricsList);
 
-            assertEquals(testCase.expectedResult.ABSTRACTINTERPRETATION, createdMetricsObject.ABSTRACTINTERPRETATION);
-            assertEquals(testCase.expectedResult.ACCUCHANGERATE, createdMetricsObject.ACCUCHANGERATE);
-            assertEquals(testCase.expectedResult.ACCUFIXRATE, createdMetricsObject.ACCUFIXRATE);
-            assertEquals(testCase.expectedResult.ACCULINESADDED, createdMetricsObject.ACCULINESADDED);
-            assertEquals(testCase.expectedResult.ACCULINESCHANGED, createdMetricsObject.ACCULINESCHANGED);
-            assertEquals(testCase.expectedResult.ACCULINESDELETED, createdMetricsObject.ACCULINESDELETED);
-            assertEquals(testCase.expectedResult.AI, createdMetricsObject.AI);
-            assertEquals(testCase.expectedResult.ALL, createdMetricsObject.ALL);
-            assertEquals(testCase.expectedResult.AVGCYCLOMATICCOMPLEXITY, createdMetricsObject.AVGCYCLOMATICCOMPLEXITY);
-            assertEquals(testCase.expectedResult.BEGIN, createdMetricsObject.BEGIN);
-            assertEquals(testCase.expectedResult.BUILDRELATIONS, createdMetricsObject.BUILDRELATIONS);
-            assertEquals(testCase.expectedResult.CHANGEDFILES, createdMetricsObject.CHANGEDFILES);
-            assertEquals(testCase.expectedResult.CHANGERATE, createdMetricsObject.CHANGERATE);
-            assertEquals(testCase.expectedResult.CODINGSTANDARD, createdMetricsObject.CODINGSTANDARD);
-            assertEquals(testCase.expectedResult.COMPILERWARNING, createdMetricsObject.COMPILERWARNING);
-            assertEquals(testCase.expectedResult.CS, createdMetricsObject.CS);
-            assertEquals(testCase.expectedResult.CW, createdMetricsObject.CW);
-            assertEquals(testCase.expectedResult.CY, createdMetricsObject.CY);
-            assertEquals(testCase.expectedResult.CYCLOMATICCOMPLEXITY, createdMetricsObject.CYCLOMATICCOMPLEXITY);
-            assertEquals(testCase.expectedResult.DEADCODE, createdMetricsObject.DEADCODE);
-            assertEquals(testCase.expectedResult.DUP, createdMetricsObject.DUP);
-            assertEquals(testCase.expectedResult.DUPLICATEDCODE, createdMetricsObject.DUPLICATEDCODE);
-            assertEquals(testCase.expectedResult.DUPLICATEDCODECUSTOM, createdMetricsObject.DUPLICATEDCODECUSTOM);
-            assertEquals(testCase.expectedResult.ELOC, createdMetricsObject.ELOC);
-            assertEquals(testCase.expectedResult.END, createdMetricsObject.END);
-            assertEquals(testCase.expectedResult.FANOUT, createdMetricsObject.FANOUT);
-            assertEquals(testCase.expectedResult.FANOUT_INTEXT, createdMetricsObject.FANOUT_INTEXT);
-            assertEquals(testCase.expectedResult.FINALIZE, createdMetricsObject.FINALIZE);
-            assertEquals(testCase.expectedResult.FIXRATE, createdMetricsObject.FIXRATE);
-            assertEquals(testCase.expectedResult.GLOC, createdMetricsObject.GLOC);
-            assertEquals(testCase.expectedResult.HIS_AVGCYCLOMATICCOMPLEXITY, createdMetricsObject.HIS_AVGCYCLOMATICCOMPLEXITY);
-            assertEquals(testCase.expectedResult.HIS_CALLLEVELS, createdMetricsObject.HIS_CALLLEVELS);
-            assertEquals(testCase.expectedResult.HIS_CALLLEVELS_MAX, createdMetricsObject.HIS_CALLLEVELS_MAX);
-            assertEquals(testCase.expectedResult.HIS_CODINGSTANDARD, createdMetricsObject.HIS_CODINGSTANDARD);
-            assertEquals(testCase.expectedResult.HIS_COMMENTDENSITY, createdMetricsObject.HIS_COMMENTDENSITY);
-            assertEquals(testCase.expectedResult.HIS_FUNCCALLS, createdMetricsObject.HIS_FUNCCALLS);
-            assertEquals(testCase.expectedResult.HIS_FUNCCALLS_MAX, createdMetricsObject.HIS_FUNCCALLS_MAX);
-            assertEquals(testCase.expectedResult.HIS_FUNCCYCLE, createdMetricsObject.HIS_FUNCCYCLE);
-            assertEquals(testCase.expectedResult.HIS_FUNCCYCLE_MAX, createdMetricsObject.HIS_FUNCCYCLE_MAX);
-            assertEquals(testCase.expectedResult.HIS_FUNCSIZE, createdMetricsObject.HIS_FUNCSIZE);
-            assertEquals(testCase.expectedResult.HIS_FUNCSIZE_MAX, createdMetricsObject.HIS_FUNCSIZE_MAX);
-            assertEquals(testCase.expectedResult.HIS_GOTOSTATEMENTS, createdMetricsObject.HIS_GOTOSTATEMENTS);
-            assertEquals(testCase.expectedResult.HIS_GOTOSTATEMENTS_MAX, createdMetricsObject.HIS_GOTOSTATEMENTS_MAX);
-            assertEquals(testCase.expectedResult.HIS_MAXCYCLOMATICCOMPLEXITY, createdMetricsObject.HIS_MAXCYCLOMATICCOMPLEXITY);
-            assertEquals(testCase.expectedResult.HIS_PARAMCOUNT, createdMetricsObject.HIS_PARAMCOUNT);
-            assertEquals(testCase.expectedResult.HIS_PARAMCOUNT_MAX, createdMetricsObject.HIS_PARAMCOUNT_MAX);
-            assertEquals(testCase.expectedResult.HIS_PATHCOUNT, createdMetricsObject.HIS_PATHCOUNT);
-            assertEquals(testCase.expectedResult.HIS_PATHCOUNT_MAX, createdMetricsObject.HIS_PATHCOUNT_MAX);
-            assertEquals(testCase.expectedResult.HIS_RETURNPOINTS, createdMetricsObject.HIS_RETURNPOINTS);
-            assertEquals(testCase.expectedResult.HIS_RETURNPOINTS_MAX, createdMetricsObject.HIS_RETURNPOINTS_MAX);
-            assertEquals(testCase.expectedResult.HIS_VOCF, createdMetricsObject.HIS_VOCF);
-            assertEquals(testCase.expectedResult.INCLUDERELATIONS, createdMetricsObject.INCLUDERELATIONS);
-            assertEquals(testCase.expectedResult.INTEGRATIONBRANCHCOVERAGE, createdMetricsObject.INTEGRATIONBRANCHCOVERAGE);
-            assertEquals(testCase.expectedResult.INTEGRATIONDECISIONCOVERAGE, createdMetricsObject.INTEGRATIONDECISIONCOVERAGE);
-            assertEquals(testCase.expectedResult.INTEGRATIONFUNCTIONCOVERAGE, createdMetricsObject.INTEGRATIONFUNCTIONCOVERAGE);
-            assertEquals(testCase.expectedResult.INTEGRATIONSTATEMENTCOVERAGE, createdMetricsObject.INTEGRATIONSTATEMENTCOVERAGE);
-            assertEquals(testCase.expectedResult.INTEGRATIONTESTCOVERAGE, createdMetricsObject.INTEGRATIONTESTCOVERAGE);
-            assertEquals(testCase.expectedResult.ITC, createdMetricsObject.ITC);
-            assertEquals(testCase.expectedResult.LINESADDED, createdMetricsObject.LINESADDED);
-            assertEquals(testCase.expectedResult.LINESCHANGED, createdMetricsObject.LINESCHANGED);
-            assertEquals(testCase.expectedResult.LINESDELETED, createdMetricsObject.LINESDELETED);
-            assertEquals(testCase.expectedResult.LOC, createdMetricsObject.LOC);
-            assertEquals(testCase.expectedResult.MAXCYCLOMATICCOMPLEXITY, createdMetricsObject.MAXCYCLOMATICCOMPLEXITY);
-            assertEquals(testCase.expectedResult.PATHCOUNT, createdMetricsObject.PATHCOUNT);
-            assertEquals(testCase.expectedResult.PATHCOUNT_MAX, createdMetricsObject.PATHCOUNT_MAX);
-            assertEquals(testCase.expectedResult.POSTANA, createdMetricsObject.POSTANA);
-            assertEquals(testCase.expectedResult.PREPARE, createdMetricsObject.PREPARE);
-            assertEquals(testCase.expectedResult.SEC, createdMetricsObject.SEC);
-            assertEquals(testCase.expectedResult.SECURITY, createdMetricsObject.SECURITY);
-            assertEquals(testCase.expectedResult.STC, createdMetricsObject.STC);
-            assertEquals(testCase.expectedResult.SYSTEMBRANCHCOVERAGE, createdMetricsObject.SYSTEMBRANCHCOVERAGE);
-            assertEquals(testCase.expectedResult.SYSTEMDECISIONCOVERAGE, createdMetricsObject.SYSTEMDECISIONCOVERAGE);
-            assertEquals(testCase.expectedResult.SYSTEMFUNCTIONCOVERAGE, createdMetricsObject.SYSTEMFUNCTIONCOVERAGE);
-            assertEquals(testCase.expectedResult.SYSTEMSTATEMENTCOVERAGE, createdMetricsObject.SYSTEMSTATEMENTCOVERAGE);
-            assertEquals(testCase.expectedResult.SYSTEMTESTCOVERAGE, createdMetricsObject.SYSTEMTESTCOVERAGE);
-            assertEquals(testCase.expectedResult.TOTALBRANCHCOVERAGE, createdMetricsObject.TOTALBRANCHCOVERAGE);
-            assertEquals(testCase.expectedResult.TOTALDECISIONCOVERAGE, createdMetricsObject.TOTALDECISIONCOVERAGE);
-            assertEquals(testCase.expectedResult.TOTALFUNCTIONCOVERAGE, createdMetricsObject.TOTALFUNCTIONCOVERAGE);
-            assertEquals(testCase.expectedResult.TOTALSTATEMENTCOVERAGE, createdMetricsObject.TOTALSTATEMENTCOVERAGE);
-            assertEquals(testCase.expectedResult.TOTALTESTCOVERAGE, createdMetricsObject.TOTALTESTCOVERAGE);
-            assertEquals(testCase.expectedResult.TTC, createdMetricsObject.TTC);
-            assertEquals(testCase.expectedResult.UNITBRANCHCOVERAGE, createdMetricsObject.UNITBRANCHCOVERAGE);
-            assertEquals(testCase.expectedResult.UNITDECISIONCOVERAGE, createdMetricsObject.UNITDECISIONCOVERAGE);
-            assertEquals(testCase.expectedResult.UNITFUNCTIONCOVERAGE, createdMetricsObject.UNITFUNCTIONCOVERAGE);
-            assertEquals(testCase.expectedResult.UNITSTATEMENTCOVERAGE, createdMetricsObject.UNITSTATEMENTCOVERAGE);
-            assertEquals(testCase.expectedResult.UNITTESTCOVERAGE, createdMetricsObject.UNITTESTCOVERAGE);
-            assertEquals(testCase.expectedResult.UTC, createdMetricsObject.UTC);
-        }
+        assertEquals(expectedResult.ABSTRACTINTERPRETATION, createdMetricsObject.ABSTRACTINTERPRETATION);
+        assertEquals(expectedResult.ACCUCHANGERATE, createdMetricsObject.ACCUCHANGERATE);
+        assertEquals(expectedResult.ACCUFIXRATE, createdMetricsObject.ACCUFIXRATE);
+        assertEquals(expectedResult.ACCULINESADDED, createdMetricsObject.ACCULINESADDED);
+        assertEquals(expectedResult.ACCULINESCHANGED, createdMetricsObject.ACCULINESCHANGED);
+        assertEquals(expectedResult.ACCULINESDELETED, createdMetricsObject.ACCULINESDELETED);
+        assertEquals(expectedResult.AI, createdMetricsObject.AI);
+        assertEquals(expectedResult.ALL, createdMetricsObject.ALL);
+        assertEquals(expectedResult.AVGCYCLOMATICCOMPLEXITY, createdMetricsObject.AVGCYCLOMATICCOMPLEXITY);
+        assertEquals(expectedResult.BEGIN, createdMetricsObject.BEGIN);
+        assertEquals(expectedResult.BUILDRELATIONS, createdMetricsObject.BUILDRELATIONS);
+        assertEquals(expectedResult.CHANGEDFILES, createdMetricsObject.CHANGEDFILES);
+        assertEquals(expectedResult.CHANGERATE, createdMetricsObject.CHANGERATE);
+        assertEquals(expectedResult.CODINGSTANDARD, createdMetricsObject.CODINGSTANDARD);
+        assertEquals(expectedResult.COMPILERWARNING, createdMetricsObject.COMPILERWARNING);
+        assertEquals(expectedResult.CS, createdMetricsObject.CS);
+        assertEquals(expectedResult.CW, createdMetricsObject.CW);
+        assertEquals(expectedResult.CY, createdMetricsObject.CY);
+        assertEquals(expectedResult.CYCLOMATICCOMPLEXITY, createdMetricsObject.CYCLOMATICCOMPLEXITY);
+        assertEquals(expectedResult.DEADCODE, createdMetricsObject.DEADCODE);
+        assertEquals(expectedResult.DUP, createdMetricsObject.DUP);
+        assertEquals(expectedResult.DUPLICATEDCODE, createdMetricsObject.DUPLICATEDCODE);
+        assertEquals(expectedResult.DUPLICATEDCODECUSTOM, createdMetricsObject.DUPLICATEDCODECUSTOM);
+        assertEquals(expectedResult.ELOC, createdMetricsObject.ELOC);
+        assertEquals(expectedResult.END, createdMetricsObject.END);
+        assertEquals(expectedResult.FANOUT, createdMetricsObject.FANOUT);
+        assertEquals(expectedResult.FANOUT_INTEXT, createdMetricsObject.FANOUT_INTEXT);
+        assertEquals(expectedResult.FINALIZE, createdMetricsObject.FINALIZE);
+        assertEquals(expectedResult.FIXRATE, createdMetricsObject.FIXRATE);
+        assertEquals(expectedResult.GLOC, createdMetricsObject.GLOC);
+        assertEquals(expectedResult.HIS_AVGCYCLOMATICCOMPLEXITY, createdMetricsObject.HIS_AVGCYCLOMATICCOMPLEXITY);
+        assertEquals(expectedResult.HIS_CALLLEVELS, createdMetricsObject.HIS_CALLLEVELS);
+        assertEquals(expectedResult.HIS_CALLLEVELS_MAX, createdMetricsObject.HIS_CALLLEVELS_MAX);
+        assertEquals(expectedResult.HIS_CODINGSTANDARD, createdMetricsObject.HIS_CODINGSTANDARD);
+        assertEquals(expectedResult.HIS_COMMENTDENSITY, createdMetricsObject.HIS_COMMENTDENSITY);
+        assertEquals(expectedResult.HIS_FUNCCALLS, createdMetricsObject.HIS_FUNCCALLS);
+        assertEquals(expectedResult.HIS_FUNCCALLS_MAX, createdMetricsObject.HIS_FUNCCALLS_MAX);
+        assertEquals(expectedResult.HIS_FUNCCYCLE, createdMetricsObject.HIS_FUNCCYCLE);
+        assertEquals(expectedResult.HIS_FUNCCYCLE_MAX, createdMetricsObject.HIS_FUNCCYCLE_MAX);
+        assertEquals(expectedResult.HIS_FUNCSIZE, createdMetricsObject.HIS_FUNCSIZE);
+        assertEquals(expectedResult.HIS_FUNCSIZE_MAX, createdMetricsObject.HIS_FUNCSIZE_MAX);
+        assertEquals(expectedResult.HIS_GOTOSTATEMENTS, createdMetricsObject.HIS_GOTOSTATEMENTS);
+        assertEquals(expectedResult.HIS_GOTOSTATEMENTS_MAX, createdMetricsObject.HIS_GOTOSTATEMENTS_MAX);
+        assertEquals(expectedResult.HIS_MAXCYCLOMATICCOMPLEXITY, createdMetricsObject.HIS_MAXCYCLOMATICCOMPLEXITY);
+        assertEquals(expectedResult.HIS_PARAMCOUNT, createdMetricsObject.HIS_PARAMCOUNT);
+        assertEquals(expectedResult.HIS_PARAMCOUNT_MAX, createdMetricsObject.HIS_PARAMCOUNT_MAX);
+        assertEquals(expectedResult.HIS_PATHCOUNT, createdMetricsObject.HIS_PATHCOUNT);
+        assertEquals(expectedResult.HIS_PATHCOUNT_MAX, createdMetricsObject.HIS_PATHCOUNT_MAX);
+        assertEquals(expectedResult.HIS_RETURNPOINTS, createdMetricsObject.HIS_RETURNPOINTS);
+        assertEquals(expectedResult.HIS_RETURNPOINTS_MAX, createdMetricsObject.HIS_RETURNPOINTS_MAX);
+        assertEquals(expectedResult.HIS_VOCF, createdMetricsObject.HIS_VOCF);
+        assertEquals(expectedResult.INCLUDERELATIONS, createdMetricsObject.INCLUDERELATIONS);
+        assertEquals(expectedResult.INTEGRATIONBRANCHCOVERAGE, createdMetricsObject.INTEGRATIONBRANCHCOVERAGE);
+        assertEquals(expectedResult.INTEGRATIONDECISIONCOVERAGE, createdMetricsObject.INTEGRATIONDECISIONCOVERAGE);
+        assertEquals(expectedResult.INTEGRATIONFUNCTIONCOVERAGE, createdMetricsObject.INTEGRATIONFUNCTIONCOVERAGE);
+        assertEquals(expectedResult.INTEGRATIONSTATEMENTCOVERAGE, createdMetricsObject.INTEGRATIONSTATEMENTCOVERAGE);
+        assertEquals(expectedResult.INTEGRATIONTESTCOVERAGE, createdMetricsObject.INTEGRATIONTESTCOVERAGE);
+        assertEquals(expectedResult.ITC, createdMetricsObject.ITC);
+        assertEquals(expectedResult.LINESADDED, createdMetricsObject.LINESADDED);
+        assertEquals(expectedResult.LINESCHANGED, createdMetricsObject.LINESCHANGED);
+        assertEquals(expectedResult.LINESDELETED, createdMetricsObject.LINESDELETED);
+        assertEquals(expectedResult.LOC, createdMetricsObject.LOC);
+        assertEquals(expectedResult.MAXCYCLOMATICCOMPLEXITY, createdMetricsObject.MAXCYCLOMATICCOMPLEXITY);
+        assertEquals(expectedResult.PATHCOUNT, createdMetricsObject.PATHCOUNT);
+        assertEquals(expectedResult.PATHCOUNT_MAX, createdMetricsObject.PATHCOUNT_MAX);
+        assertEquals(expectedResult.POSTANA, createdMetricsObject.POSTANA);
+        assertEquals(expectedResult.PREPARE, createdMetricsObject.PREPARE);
+        assertEquals(expectedResult.SEC, createdMetricsObject.SEC);
+        assertEquals(expectedResult.SECURITY, createdMetricsObject.SECURITY);
+        assertEquals(expectedResult.STC, createdMetricsObject.STC);
+        assertEquals(expectedResult.SYSTEMBRANCHCOVERAGE, createdMetricsObject.SYSTEMBRANCHCOVERAGE);
+        assertEquals(expectedResult.SYSTEMDECISIONCOVERAGE, createdMetricsObject.SYSTEMDECISIONCOVERAGE);
+        assertEquals(expectedResult.SYSTEMFUNCTIONCOVERAGE, createdMetricsObject.SYSTEMFUNCTIONCOVERAGE);
+        assertEquals(expectedResult.SYSTEMSTATEMENTCOVERAGE, createdMetricsObject.SYSTEMSTATEMENTCOVERAGE);
+        assertEquals(expectedResult.SYSTEMTESTCOVERAGE, createdMetricsObject.SYSTEMTESTCOVERAGE);
+        assertEquals(expectedResult.TOTALBRANCHCOVERAGE, createdMetricsObject.TOTALBRANCHCOVERAGE);
+        assertEquals(expectedResult.TOTALDECISIONCOVERAGE, createdMetricsObject.TOTALDECISIONCOVERAGE);
+        assertEquals(expectedResult.TOTALFUNCTIONCOVERAGE, createdMetricsObject.TOTALFUNCTIONCOVERAGE);
+        assertEquals(expectedResult.TOTALSTATEMENTCOVERAGE, createdMetricsObject.TOTALSTATEMENTCOVERAGE);
+        assertEquals(expectedResult.TOTALTESTCOVERAGE, createdMetricsObject.TOTALTESTCOVERAGE);
+        assertEquals(expectedResult.TTC, createdMetricsObject.TTC);
+        assertEquals(expectedResult.UNITBRANCHCOVERAGE, createdMetricsObject.UNITBRANCHCOVERAGE);
+        assertEquals(expectedResult.UNITDECISIONCOVERAGE, createdMetricsObject.UNITDECISIONCOVERAGE);
+        assertEquals(expectedResult.UNITFUNCTIONCOVERAGE, createdMetricsObject.UNITFUNCTIONCOVERAGE);
+        assertEquals(expectedResult.UNITSTATEMENTCOVERAGE, createdMetricsObject.UNITSTATEMENTCOVERAGE);
+        assertEquals(expectedResult.UNITTESTCOVERAGE, createdMetricsObject.UNITTESTCOVERAGE);
+        assertEquals(expectedResult.UTC, createdMetricsObject.UTC);
+    }
 
-        // Test case where an exception is thrown
+    @Test
+    void testCreateMetricObjectThrowingException() {
+        final TicsPipelineRun ticsPipeLineRun = new TicsPipelineRun("myProject", "myBranch");
         final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> ticsPipeLineRun.createMetricsObject(List.of("RANDOM")));
 
         assertEquals("The following metrics are incorrect: [RANDOM]. \n"
