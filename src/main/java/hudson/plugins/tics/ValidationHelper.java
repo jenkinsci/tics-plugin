@@ -10,7 +10,7 @@ import hudson.model.TaskListener;
 import hudson.plugins.tics.MeasureApiCall.MeasureApiCallException;
 import hudson.plugins.tics.TicsPublisher.InvalidTicsViewerUrl;
 import hudson.util.FormValidation;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
 
 import java.io.ByteArrayOutputStream;
