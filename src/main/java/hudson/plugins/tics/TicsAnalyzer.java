@@ -19,11 +19,13 @@ import hudson.model.TaskListener;
 import hudson.plugins.tics.TicsPublisher.InvalidTicsViewerUrl;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
+import hudson.util.ArgumentListBuilder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -36,10 +38,12 @@ import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class TicsAnalyzer extends Builder implements SimpleBuildStep {
     static final String LOGGING_PREFIX = "[TICS Analyzer] ";
@@ -144,87 +148,102 @@ public class TicsAnalyzer extends Builder implements SimpleBuildStep {
         if (path.isEmpty() || installTics) {
             return command;
         }
-        // Note: we do not use new File(), because we do not want use the local FileSystem
+        // Note: we do not use new File(), because we do not want to use the local FileSystem
         if (!path.endsWith("/") && !path.endsWith("\\")) {
             path += "/";
         }
         return path + command;
     }
 
-
     int launchTicsQServer(final String url, final Run<?, ?> run, final Launcher launcher, final TaskListener listener, final EnvVars buildEnv) throws IOException, InterruptedException {
         final boolean isLauncherUnix = launcher.isUnix();
 
         final String bootstrapCommand = installTics ? getBootstrapCmd(url, isLauncherUnix) : "";
-        final ImmutableList<String> ticsAnalysisCommand = getTicsQServerArgs(buildEnv, isLauncherUnix);
+        final List<String> ticsAnalysisCommand = getTicsQServerArgs(buildEnv, isLauncherUnix);
 
-        final String command = createCommand(bootstrapCommand, ticsAnalysisCommand, isLauncherUnix);
-        final ProcStarter starter = launcher.new ProcStarter().stdout(listener).cmdAsSingleString(command)
+        final ArgumentListBuilder command = createCommand(bootstrapCommand, ticsAnalysisCommand, isLauncherUnix);
+        final ProcStarter starter = launcher.new ProcStarter().stdout(listener).cmds(command)
                 .envs(getEnvMap(buildEnv, run));
 
         return launcher.launch(starter).join();
     }
 
 
-    protected ImmutableList<String> getTicsQServerArgs(final EnvVars buildEnv, final boolean isLauncherUnix) {
-        final ImmutableList.Builder<String> args = ImmutableList.builder();
+    protected List<String> getTicsQServerArgs(final EnvVars buildEnv, final boolean isLauncherUnix) {
+        final ArgumentListBuilder args = new ArgumentListBuilder();
         final String ticsQServer = "TICSQServer" + (isLauncherUnix ? "" : ".exe");
 
         args.add(getFullyQualifiedPath(ticsQServer));
 
         if (isNotEmpty(projectName)) {
             args.add("-project");
-            args.add(escapeValue(Util.replaceMacro(projectName, buildEnv)));
+            args.add(Util.replaceMacro(projectName, buildEnv));
         }
         if (isNotEmpty(branchName)) {
             args.add("-branchname");
-            args.add(escapeValue(Util.replaceMacro(branchName, buildEnv)));
+            args.add(Util.replaceMacro(branchName, buildEnv));
         }
 
         if (!Strings.isNullOrEmpty(branchDirectory)) {
             args.add("-branchdir");
-            args.add(escapeValue(Util.replaceMacro(branchDirectory, buildEnv)));
+            args.add(Util.replaceMacro(branchDirectory, buildEnv));
         }
 
         if (createTmpdir && isNotEmpty(tmpdir)) {
             args.add("-tmpdir");
-            args.add(escapeValue(Util.replaceMacro(tmpdir.trim(), buildEnv)));
+            args.add(Util.replaceMacro(tmpdir.trim(), buildEnv));
         }
+
         if (isNotEmpty(extraArguments)) {
-            args.add(Objects.requireNonNull(Util.replaceMacro(extraArguments.trim(), buildEnv)));
+            args.addTokenized(Objects.requireNonNull(Util.replaceMacro(extraArguments.trim(), buildEnv)));
         }
+
         addMetrics(args, "-calc", calc);
         addMetrics(args, "-recalc", recalc);
 
-        return args.build();
-    }
-
-    private String escapeValue(final String value) {
-        return "'" + value + "'";
+        return args.toList();
     }
 
     protected String getBootstrapCmd(final String url, final boolean isLinux) {
+        final String safeUrl = isLinux ? url.replace("'", "'\\''") : url.replace("'", "''");
         if (isLinux) {
             return ". <(curl --silent --show-error '" + url + "')";
         } else {
-            return "[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('" + url + "'))";
+            return "[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('" + safeUrl + "'))";
         }
     }
 
-    protected String createCommand(final String bootstrapCmd, final ImmutableList<String> ticsAnalysisCmd, final boolean isLinux) {
-        final String command;
+    protected ArgumentListBuilder createCommand(final String bootstrapCmd, final List<String> ticsAnalysisCmd, final boolean isLinux) {
+        final ArgumentListBuilder args = new ArgumentListBuilder();
         if (isLinux) {
-            final String bootstrap = bootstrapCmd.isEmpty() ? "" : bootstrapCmd + " &&";
-            command = "bash -c \"" + bootstrap + " " + getTicsAnalysisCmd(ticsAnalysisCmd) + "\"";
+            args.add("bash", "-c");
+            final String bootstrap = bootstrapCmd.isEmpty() ? "" : bootstrapCmd + " && ";
+            args.add(bootstrap + getTicsAnalysisCmd(ticsAnalysisCmd, true));
         } else {
-            final String bootstrap = bootstrapCmd.isEmpty() ? "" : bootstrapCmd;
-            command = "powershell \"" + bootstrap + "; if ($?) { " + getTicsAnalysisCmd(ticsAnalysisCmd) + " }\"";
+            args.add("powershell", "-NoProfile", "-NonInteractive", "-Command");
+            args.add(bootstrapCmd + "; if ($?) { " + getTicsAnalysisCmd(ticsAnalysisCmd, false) + " }");
         }
-        return command;
+        return args;
     }
 
-    protected String getTicsAnalysisCmd(final ImmutableList<String> ticsAnalysisCmd) {
-        return String.join(" ", ticsAnalysisCmd);
+    protected String getTicsAnalysisCmd(final List<String> ticsAnalysisCmd, final boolean isLinux) {
+        if (isLinux) {
+            return ticsAnalysisCmd.stream().map(StringEscapeUtils::escapeXSI).collect(Collectors.joining(" "));
+        } else {
+            return ticsAnalysisCmd.stream().map(this::escapePowerShellArg).collect(Collectors.joining(" "));
+        }
+    }
+
+    private String escapePowerShellArg(final String arg) {
+        if (arg == null || arg.isEmpty()) {
+            return "''";
+        }
+        // If it's a flag without values (e.g., -project) or an executable, leave unquoted
+        if ((arg.startsWith("-") || arg.endsWith(".exe")) && !arg.contains(" ") && !arg.contains("'") && !arg.contains("\"")) {
+            return arg;
+        }
+        // Single quote values, escaping internal single quotes and double quotes
+        return "'" + arg.replace("'", "''").replace("\"", "`\"") + "'";
     }
 
     private String getInstallTicsApiUrl(final String tiobewebBaseUrl, final String os) throws URISyntaxException {
@@ -242,7 +261,7 @@ public class TicsAnalyzer extends Builder implements SimpleBuildStep {
         return !Strings.nullToEmpty(arg).trim().isEmpty();
     }
 
-    void addMetrics(final ImmutableList.Builder<String> args, final String key, final Metrics metrics) {
+    void addMetrics(final ArgumentListBuilder args, final String key, final Metrics metrics) {
         final ImmutableList<String> names = metrics.getEnabledMetrics();
         if (!names.isEmpty()) {
             args.add(key);
