@@ -21,7 +21,7 @@ jobs:
       - name: Build with Maven
         run: ./mvnw --batch-mode --update-snapshots clean install -P enable-jacoco
       - name: Run TICSQServer
-        uses: tiobe/tics-github-action@v3
+        uses: tiobe/tics-github-action@v4
         with:
           mode: qserver
           project: Jenkins
